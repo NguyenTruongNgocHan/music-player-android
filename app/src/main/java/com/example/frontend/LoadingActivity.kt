@@ -18,6 +18,7 @@ class LoadingActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper()).postDelayed({
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             finish() // Đóng LoadingActivity để không quay lại được
         }, 3000) // Thời gian delay (3 giây)
     }
