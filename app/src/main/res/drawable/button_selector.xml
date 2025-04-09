@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Trạng thái khi rê chuột vào (hover) -->
+    <item android:state_hovered="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFD700"/> <!-- Màu vàng khi hover -->
+            <corners android:radius="20dp"/>
+        </shape>
+    </item>
+
+    <!-- Trạng thái mặc định -->
+    <item>
+        <shape android:shape="rectangle">
+            android:shape="rectangle">
+            <corners android:radius="20dp"/>
+            <solid android:color="#AD82D9"/>
+            <stroke android:width="4dp" android:color="#F2B6E2"/>
+        </shape>
+    </item>
+</selector>
