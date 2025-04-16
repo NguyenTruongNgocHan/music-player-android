@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="sidebar_item_color">#F5F5F5</color>
+    <color name="gray">#B0B0B0</color>
+
 </resources>

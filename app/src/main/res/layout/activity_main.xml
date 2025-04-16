@@ -1,49 +1,64 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:id="@+id/drawerLayout"
     android:background="@drawable/loading_bg"
-    tools:context=".MainActivity">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
+    <!-- Nội dung chính của app -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:orientation="vertical">
 
+        <!-- Toolbar hoặc thanh trên đầu -->
+        <!-- SearchView + Avatar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:padding="8dp">
 
-
-
-
-
+            <androidx.appcompat.widget.SearchView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="48dp"
+                android:iconifiedByDefault="false"
+                android:queryHint="Tìm kiếm bài hát..."
+                android:background="@android:color/white" />
 
             <ImageButton
                 android:id="@+id/imageButton"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@drawable/avt_example"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/default_avt"
+                android:background="@android:color/transparent"
                 android:scaleType="centerCrop"
-                android:background="@null"
-                android:padding="4dp"/>
+                android:contentDescription="Avatar"
+                />
 
 
 
         </LinearLayout>
 
-
-
-
+        <!-- Các nội dung khác -->
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Sidebar menu -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navView"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/black"
+        android:paddingStart="0dp"
+        android:paddingLeft="0dp"
+        app:itemHorizontalPadding="8dp"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/nav_menu"
+        app:itemTextColor="@color/sidebar_item_color"
+        app:itemIconTint="@color/sidebar_item_color"/>
+
+
+</androidx.drawerlayout.widget.DrawerLayout>

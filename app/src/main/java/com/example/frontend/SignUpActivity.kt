@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.*
 import org.json.JSONObject
@@ -89,7 +90,11 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun sendOTP(email: String) {
-        val requestBody = FormBody.Builder().add("email", email).build()
+        val requestBody = FormBody.Builder()
+            .add("email", email)
+            .add("mode", "signup")
+            .build()
+
         val request = Request.Builder()
             .url("$serverBaseUrl/send_otp.php")
             .post(requestBody)
@@ -103,14 +108,33 @@ class SignUpActivity : AppCompatActivity() {
             override fun onResponse(call: Call, response: Response) {
                 val body = response.body?.string() ?: return
                 Log.d("SEND_OTP_RESPONSE", body)
+
                 runOnUiThread {
                     try {
                         val json = JSONObject(body)
-                        if (json.getString("status") == "success") {
-                            toast("Mã OTP đã gửi về email!")
-                            includeOTP.visibility = View.VISIBLE
-                        } else {
-                            toast("Không gửi được mã OTP")
+                        when (json.getString("status")) {
+                            "success" -> {
+                                toast("Mã OTP đã gửi về email!")
+                                includeOTP.visibility = View.VISIBLE
+                            }
+
+                            "exists" -> {
+                                AlertDialog.Builder(this@SignUpActivity)
+                                    .setTitle("Email đã tồn tại")
+                                    .setMessage("Email này đã được thiết lập account!\nBạn muốn đăng nhập không?")
+                                    .setPositiveButton("Đăng nhập") { _, _ ->
+                                        startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
+                                        finish()
+                                    }
+                                    .setNegativeButton("Thoát") { _, _ ->
+                                        finishAffinity()
+                                    }
+                                    .show()
+                            }
+
+                            else -> {
+                                toast("Không gửi được mã OTP")
+                            }
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -120,6 +144,7 @@ class SignUpActivity : AppCompatActivity() {
             }
         })
     }
+
 
     private fun verifyOTP(email: String, otp: String) {
         val requestBody = FormBody.Builder()
@@ -173,32 +198,52 @@ class SignUpActivity : AppCompatActivity() {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { toast("Lỗi đăng ký: ${e.message}") }
+                runOnUiThread { toast("Lỗi gửi OTP: ${e.message}") }
             }
 
             override fun onResponse(call: Call, response: Response) {
                 val body = response.body?.string() ?: return
-                Log.d("SIGN_UP_RESPONSE", body)
+                val json = JSONObject(body)
+
                 runOnUiThread {
-                    try {
-                        val json = JSONObject(body)
-                        when (json.getString("status")) {
-                            "success" -> {
-                                toast("Đăng ký thành công!")
-                                startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
-                                finish()
-                            }
-                            "exists" -> toast("Email đã tồn tại!")
-                            else -> toast("Đăng ký thất bại!")
+                    when (json.getString("status")) {
+                        "exists" -> {
+                            AlertDialog.Builder(this@SignUpActivity)
+                                .setTitle("Email đã tồn tại")
+                                .setMessage("Email này đã được thiết lập account!\nBạn muốn đăng nhập không?")
+                                .setPositiveButton("Đăng nhập") { _, _ ->
+                                    startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
+                                    finish()
+                                }
+                                .setNegativeButton("Thoát") { _, _ ->
+                                    finishAffinity()
+                                }
+                                .show()
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        toast("Lỗi JSON khi đăng ký")
+
+                        "success" -> {
+                            AlertDialog.Builder(this@SignUpActivity)
+                                .setTitle("Tạo tài khoản thành công")
+                                .setMessage("Bạn muốn đăng nhập luôn không?")
+                                .setPositiveButton("Đăng nhập") { _, _ ->
+                                    val intent = Intent(this@SignUpActivity, LoginActivity::class.java)
+                                    startActivity(intent)
+                                    finish()
+                                }
+                                .setNegativeButton("Thoát") { _, _ ->
+                                    finishAffinity()
+                                }
+                                .show()
+                        }
+
+                        else -> toast("Đăng ký thất bại!")
                     }
                 }
             }
         })
+
     }
+
 
     private fun showPasswordFields() {
         passwordInput.visibility = View.VISIBLE

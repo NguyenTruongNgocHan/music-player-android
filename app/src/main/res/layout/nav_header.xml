@@ -1,0 +1,45 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="horizontal"
+android:background="#2D0F44"
+android:padding="16dp"
+
+android:gravity="center_vertical">
+
+<!-- Avatar -->
+<ImageView
+    android:id="@+id/avatarInSidebar"
+    android:layout_width="72dp"
+    android:layout_height="72dp"
+    android:src="@drawable/default_avt"
+    android:scaleType="centerCrop"
+    android:background="@drawable/circle_background"
+    android:layout_marginEnd="16dp"/>
+
+<!-- Info -->
+<LinearLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/usernameInSidebar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NGOC HANN"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/viewProfileText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Xem hồ sơ"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"/>
+</LinearLayout>
+
+</LinearLayout>
