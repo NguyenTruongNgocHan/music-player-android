@@ -9,6 +9,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import com.example.frontend.R
+import com.example.frontend.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,8 +17,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var avatarButton: ImageButton
     private lateinit var navigationView: NavigationView
 
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_main)
 
         drawerLayout = findViewById(R.id.drawerLayout)
@@ -38,8 +42,13 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
-
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(binding.fragmentContainer.id, QueueFragment.newInstance())
+                .commit()
+        }
     }
+
     private fun showLogoutDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Xác nhận đăng xuất")

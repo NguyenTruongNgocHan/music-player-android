@@ -33,6 +33,12 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+    }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -43,6 +49,10 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.filament.android)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.fragment.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -54,6 +64,7 @@ dependencies {
 
     // YouTube Data API
     implementation ("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
+    implementation ("com.google.api-client:google-api-client-android:2.2.0")
 
     // ExoPlayer for audio playback
     implementation ("com.google.android.exoplayer:exoplayer-core:2.19.1")
@@ -64,5 +75,14 @@ dependencies {
 
     // Lifecycle components
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
+    // RecyclerView
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
+
+    // Glide for image loading
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+
+    // ViewModel
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
 
 }

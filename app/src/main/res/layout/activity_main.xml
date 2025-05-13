@@ -43,6 +43,11 @@
         </LinearLayout>
 
         <!-- Các nội dung khác -->
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/fragment_container"
+            android:name="com.example.frontend.QueueFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
     </LinearLayout>
 
     <!-- Sidebar menu -->

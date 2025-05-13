@@ -1,6 +1,7 @@
 package com.example.frontend
 
 import android.content.Context
+import android.util.Log
 import com.google.api.client.http.HttpRequestInitializer
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
@@ -18,23 +19,32 @@ class YouTubeService(private val context: Context) {
             .build()
     }
 
-    suspend fun searchSongs(query: String): List<Song> = withContext(Dispatchers.IO) {
+    suspend fun searchSongs(query: String): List<Track> = withContext(Dispatchers.IO) {
         try {
-            val search = youtube.search().list("id,snippet")
-                .setQ(query)
-                .setType("video")
-                .setMaxResults(15)
-                .setKey(context.getString(R.string.youtube_api_key))
+            val search = youtube.search().list("id,snippet").apply {
+                q = query
+                type = "video"
+                videoCategoryId = "10" // Music category
+                maxResults = 10
+                key = context.getString(R.string.youtube_api_key)
+            }.execute()
 
-            search.execute().items.map { item ->
-                Song(
-                    id = item.id.videoId,
-                    title = item.snippet.title,
-                    artist = item.snippet.channelTitle,
-                    thumbnailUrl = item.snippet.thumbnails.default.url
-                )
+            Log.d("YouTubeService", "Search results: ${search.items.map { it.snippet?.title }}")
+
+            search.items.mapNotNull { item ->
+                item.id?.videoId?.let { videoId ->
+                    Track(
+                        id = videoId,
+                        title = item.snippet.title ?: "Unknown",
+                        artist = item.snippet.channelTitle ?: "Unknown",
+                        duration = "0:00", // We'll implement duration later
+                        thumbnailUrl = item.snippet.thumbnails?.default?.url ?: ""
+                    )
+                }
             }
         } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("YouTubeService", "Error fetching songs: ${e.message}")
             emptyList()
         }
     }
@@ -45,10 +55,3 @@ class YouTubeService(private val context: Context) {
         return "https://example.com/stream/$videoId" // Placeholder
     }
 }
-
-data class Song(
-    val id: String,
-    val title: String,
-    val artist: String,
-    val thumbnailUrl: String
-)

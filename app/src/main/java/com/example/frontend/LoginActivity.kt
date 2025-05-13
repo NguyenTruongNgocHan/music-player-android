@@ -46,6 +46,11 @@ class LoginActivity : AppCompatActivity() {
                 toast("Vui lòng nhập đầy đủ email và mật khẩu")
             }
         }
+        btnGuest.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+        }
         btnForgotPassword.setOnClickListener {
             val intent = Intent(this, ForgotPasswordActivity::class.java)
             startActivity(intent)
