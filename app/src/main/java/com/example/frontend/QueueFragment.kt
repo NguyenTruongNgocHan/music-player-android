@@ -11,12 +11,16 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.frontend.databinding.FragmentQueueBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
-class QueueFragment : Fragment() {
+class QueueFragment : BottomSheetDialogFragment() {
 
     private var _binding: FragmentQueueBinding? = null
     private val binding get() = _binding!!
     private val adapter = QueueAdapter()
+    override fun getTheme(): Int = R.style.AppBottomSheetDialogTheme
 
     companion object {
         fun newInstance() = QueueFragment()
@@ -26,10 +30,9 @@ class QueueFragment : Fragment() {
         QueueViewModelFactory(YouTubeService(requireContext()))
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // TODO: Use the ViewModel
+    override fun onStart() {
+        super.onStart()
+        (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     override fun onCreateView(

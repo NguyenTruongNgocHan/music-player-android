@@ -1,8 +1,12 @@
 package com.example.frontend
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -10,12 +14,14 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import com.example.frontend.R
 import com.example.frontend.databinding.ActivityMainBinding
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var avatarButton: ImageButton
     private lateinit var navigationView: NavigationView
+    private lateinit var miniPlayerContainer: LinearLayout
 
     private lateinit var binding: ActivityMainBinding
 
@@ -27,6 +33,8 @@ class MainActivity : AppCompatActivity() {
         drawerLayout = findViewById(R.id.drawerLayout)
         avatarButton = findViewById(R.id.imageButton)
         navigationView = findViewById(R.id.navView)
+
+        miniPlayerContainer = findViewById(R.id.miniPlayerContainer)
 
         avatarButton.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
@@ -42,11 +50,47 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(binding.fragmentContainer.id, QueueFragment.newInstance())
-                .commit()
+
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null || e2 == null) return false
+                val diffY = e1.y - e2.y
+                val diffX = e1.x - e2.x
+                if (abs(diffY) > abs(diffX)) {
+                    if (abs(diffY) > SWIPE_THRESHOLD && abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY > 0) {
+                            // Swipe up detected
+                            showQueue()
+                            return true
+                        }
+                    }
+                }
+                return false
+            }
+        })
+
+        miniPlayerContainer.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            true
         }
+
+        // Optional: Also show on tap
+        miniPlayerContainer.setOnClickListener {
+            showQueue()
+        }
+    }
+
+    private fun showQueue() {
+        val queueFragment = QueueFragment()
+        queueFragment.show(supportFragmentManager, queueFragment.tag)
     }
 
     private fun showLogoutDialog() {
