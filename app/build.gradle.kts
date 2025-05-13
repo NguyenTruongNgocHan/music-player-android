@@ -52,6 +52,17 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.material:material:1.11.0'")
 
+    // YouTube Data API
+    implementation ("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
 
+    // ExoPlayer for audio playback
+    implementation ("com.google.android.exoplayer:exoplayer-core:2.19.1")
+    implementation ("com.google.android.exoplayer:exoplayer-ui:2.19.1")
+
+    // Kotlin Coroutines
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Lifecycle components
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
 
 }
