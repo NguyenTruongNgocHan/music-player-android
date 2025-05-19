@@ -5,12 +5,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.content.Intent
 import android.text.Editable
 import android.text.TextWatcher
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 
@@ -26,7 +27,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private var verifiedOTP: String = ""
 
     private val client = OkHttpClient()
-    private val serverBaseUrl = "http://192.168.183.250/music_app_backend"
+    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,17 +40,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
         btnSendCode = findViewById(R.id.btnSendCode)
         btnResetPassword = findViewById(R.id.btnResetPassword)
 
-        btnSendCode.setOnClickListener {
-            val email = emailInput.text.toString().trim()
-            if (email.isNotEmpty()) sendOTP(email) else toast("Vui lòng nhập email")
-        }
-
-        btnResetPassword.setOnClickListener {
-            val pass1 = passwordInput.text.toString()
-            val pass2 = confirmPasswordInput.text.toString()
-            if (pass1 == pass2) resetPassword(pass1) else toast("Mật khẩu không khớp!")
-        }
-        val btnVerifyCode: Button = includeOTP.findViewById(R.id.btnVerifyCode)
         codeInputs = listOf(
             includeOTP.findViewById(R.id.code1),
             includeOTP.findViewById(R.id.code2),
@@ -58,144 +48,117 @@ class ForgotPasswordActivity : AppCompatActivity() {
             includeOTP.findViewById(R.id.code5),
             includeOTP.findViewById(R.id.code6)
         )
+
         setupOTPInputs()
 
-        btnVerifyCode.setOnClickListener {
+        btnSendCode.setOnClickListener {
+            val email = emailInput.text.toString().trim()
+            if (email.isNotEmpty()) sendOTP(email) else toast("Vui lòng nhập email")
+        }
+
+        includeOTP.findViewById<Button>(R.id.btnVerifyCode).setOnClickListener {
             val otp = codeInputs.joinToString("") { it.text.toString().trim() }
             if (otp.length == 6) verifyOTP(otp) else toast("Nhập đủ 6 số mã OTP!")
         }
 
+        btnResetPassword.setOnClickListener {
+            val pass1 = passwordInput.text.toString()
+            val pass2 = confirmPasswordInput.text.toString()
+            if (pass1 == pass2) resetPassword(pass1) else toast("Mật khẩu không khớp!")
+        }
     }
 
     private fun sendOTP(email: String) {
-        val requestBody = FormBody.Builder()
-            .add("email", email)
-            .build()
+        val json = JSONObject().apply {
+            put("email", email)
+            put("mode", "forgot")
+        }
 
         val request = Request.Builder()
-            .url("$serverBaseUrl/send_otp_forgot.php")
-            .post(requestBody)
+            .url("$baseUrl/sendOtpEmail")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
 
-
         client.newCall(request).enqueue(object : Callback {
-            override fun onResponse(call: Call, response: Response) {
-                val responseBody = response.body?.string()
-                if (responseBody.isNullOrEmpty()) {
-                    runOnUiThread { toast("Phản hồi rỗng từ server") }
-                    return
-                }
-                val res = JSONObject(responseBody)
-
-                runOnUiThread {
-                    when (res.getString("status")) {
-                        "success" -> {
-                            toast("Mã xác minh đã gửi về email")
-                            btnSendCode.visibility = View.GONE  // ẩn đúng nghĩa
-                            includeOTP.visibility = View.VISIBLE
-
-
-                            val btnVerifyCode: Button = includeOTP.findViewById(R.id.btnVerifyCode)
-                            codeInputs = listOf(
-                                includeOTP.findViewById(R.id.code1),
-                                includeOTP.findViewById(R.id.code2),
-                                includeOTP.findViewById(R.id.code3),
-                                includeOTP.findViewById(R.id.code4),
-                                includeOTP.findViewById(R.id.code5),
-                                includeOTP.findViewById(R.id.code6)
-                            )
-
-                            setupOTPInputs()
-                            btnVerifyCode.visibility = View.VISIBLE
-
-                            btnVerifyCode.setOnClickListener {
-                                val otp = codeInputs.joinToString("") { it.text.toString().trim() }
-                                if (otp.length == 6) verifyOTP(otp) else toast("Nhập đủ 6 số mã OTP!")
-                            }
-                        }
-                        "not_found" -> {
-                            AlertDialog.Builder(this@ForgotPasswordActivity)
-                                .setTitle("Email chưa được đăng ký")
-                                .setMessage("Email này chưa được dùng để tạo tài khoản. Bạn muốn đăng ký không?")
-                                .setPositiveButton("Đăng ký") { _, _ ->
-                                    startActivity(Intent(this@ForgotPasswordActivity, SignUpActivity::class.java))
-                                    finish()
-                                }
-                                .setNegativeButton("Hủy") { _, _ ->
-                                    startActivity(Intent(this@ForgotPasswordActivity, LoginActivity::class.java))
-                                    finish()
-                                }
-                                .show()
-                        }
-                        else -> toast("Lỗi không xác định: ${res.getString("message")}")
-                    }
-                }
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread { toast("Lỗi gửi OTP: ${e.message}") }
             }
 
-            override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { toast("Lỗi server: ${e.message}") }
+            override fun onResponse(call: Call, response: Response) {
+                val res = JSONObject(response.body?.string() ?: "{}")
+                runOnUiThread {
+                    if (res.optString("status") == "success") {
+                        toast("Mã OTP đã được gửi")
+                        btnSendCode.visibility = View.GONE
+                        includeOTP.visibility = View.VISIBLE
+                    } else {
+                        toast("Không gửi được OTP: ${res.optString("message")}")
+                    }
+                }
             }
         })
     }
 
     private fun verifyOTP(otp: String) {
-        val body = FormBody.Builder()
-            .add("email", emailInput.text.toString())
-            .add("otp", otp)
+        val json = JSONObject().apply {
+            put("email", emailInput.text.toString())
+            put("otp", otp)
+        }
+
+        val request = Request.Builder()
+            .url("$baseUrl/verifyOtp")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
 
-        val request = Request.Builder().url("$serverBaseUrl/verify_otp.php").post(body).build()
-
         client.newCall(request).enqueue(object : Callback {
-            override fun onResponse(call: Call, response: Response) {
-                val responseBody = response.body?.string()
-                if (responseBody.isNullOrEmpty()) {
-                    runOnUiThread { toast("Phản hồi rỗng từ server") }
-                    return
-                }
-                val res = JSONObject(responseBody)
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread { toast("Lỗi xác minh OTP: ${e.message}") }
+            }
 
+            override fun onResponse(call: Call, response: Response) {
+                val res = JSONObject(response.body?.string() ?: "{}")
                 runOnUiThread {
-                    if (res.getString("status") == "verified") {
+                    if (res.optString("status") == "verified") {
                         toast("OTP hợp lệ, đổi mật khẩu nào")
-                        verifiedOTP = otp  // ← Lưu lại OTP đã xác minh thành công
+                        verifiedOTP = otp
                         passwordInput.visibility = View.VISIBLE
                         confirmPasswordInput.visibility = View.VISIBLE
                         btnResetPassword.visibility = View.VISIBLE
                     } else {
-                        toast("OTP không đúng")
+                        toast("OTP không đúng hoặc đã hết hạn")
                     }
                 }
-            }
-
-            override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { toast("Lỗi xác minh: ${e.message}") }
             }
         })
     }
 
     private fun resetPassword(newPassword: String) {
-        val body = FormBody.Builder()
-            .add("email", emailInput.text.toString())
-            .add("otp", verifiedOTP)
-            .add("password", newPassword)
+        val json = JSONObject().apply {
+            put("email", emailInput.text.toString())
+            put("otp", verifiedOTP)
+            put("password", newPassword)
+        }
+
+        val request = Request.Builder()
+            .url("$baseUrl/resetPassword")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
 
-        val request = Request.Builder().url("$serverBaseUrl/reset_password.php").post(body).build()
-
         client.newCall(request).enqueue(object : Callback {
-            override fun onResponse(call: Call, response: Response) {
-                val res = JSONObject(response.body?.string() ?: return)
-                runOnUiThread {
-                    if (res.getString("status") == "success") {
-                        toast("Mật khẩu đã cập nhật!")
-                        finish()
-                    } else toast("Cập nhật thất bại!")
-                }
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread { toast("Lỗi cập nhật mật khẩu: ${e.message}") }
             }
 
-            override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { toast("Lỗi server: ${e.message}") }
+            override fun onResponse(call: Call, response: Response) {
+                val res = JSONObject(response.body?.string() ?: "{}")
+                runOnUiThread {
+                    if (res.optString("status") == "success") {
+                        toast("Đổi mật khẩu thành công")
+                        finish()
+                    } else {
+                        toast("Lỗi đổi mật khẩu: ${res.optString("message")}")
+                    }
+                }
             }
         })
     }
