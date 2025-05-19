@@ -6,11 +6,12 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import okhttp3.*
 import androidx.appcompat.app.AppCompatActivity
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
-
 
 class LoginActivity : AppCompatActivity() {
 
@@ -20,23 +21,26 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnSignUp: Button
     private lateinit var btnGuest: Button
     private lateinit var btnForgotPassword: Button
+
+    private val client = OkHttpClient()
+    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.login) // Gọi trước khi findViewById
-        btnForgotPassword = findViewById(R.id.btnForgotPassword)
+        setContentView(R.layout.login)
 
-        // Gán giá trị sau khi setContentView
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
         btnLogin = findViewById(R.id.btnLogin)
         btnSignUp = findViewById(R.id.btnSignUp)
         btnGuest = findViewById(R.id.btnGuest)
+        btnForgotPassword = findViewById(R.id.btnForgotPassword)
 
         btnSignUp.setOnClickListener {
-            val intent = Intent(this, SignUpActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SignUpActivity::class.java))
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
+
         btnLogin.setOnClickListener {
             val email = emailInput.text.toString()
             val password = passwordInput.text.toString()
@@ -46,30 +50,27 @@ class LoginActivity : AppCompatActivity() {
                 toast("Vui lòng nhập đầy đủ email và mật khẩu")
             }
         }
+
         btnGuest.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, MainActivity::class.java))
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
+
         btnForgotPassword.setOnClickListener {
-            val intent = Intent(this, ForgotPasswordActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
-
-
     }
 
     private fun login(email: String, password: String) {
-        val client = OkHttpClient()
-        val requestBody = FormBody.Builder()
-            .add("email", email)
-            .add("password", password)
-            .build()
+        val json = JSONObject().apply {
+            put("email", email)
+            put("password", password)
+        }
 
         val request = Request.Builder()
-            .url("http://192.168.183.250/music_app_backend/login.php") // hoặc localhost nếu chạy trên máy thật
-            .post(requestBody)
+            .url("$baseUrl/loginUser")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
 
         client.newCall(request).enqueue(object : Callback {
@@ -85,32 +86,26 @@ class LoginActivity : AppCompatActivity() {
                         Log.d("LOGIN_BODY", "Server trả về: $rawBody")
 
                         val json = JSONObject(rawBody)
-                        when (json.getString("status")) {
+                        when (json.optString("status")) {
                             "success" -> {
                                 toast("Đăng nhập thành công!")
-                                val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                                startActivity(intent)
+                                startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                                 finish()
                             }
                             "invalid_password" -> toast("Sai mật khẩu!")
                             "no_user" -> toast("Không tìm thấy tài khoản!")
-                            else -> toast("Lỗi không xác định!")
+                            else -> toast("Lỗi không xác định: ${json.optString("message")}")
                         }
-
                     } catch (e: Exception) {
                         Log.e("LOGIN_JSON_ERROR", "Lỗi JSON hoặc context: ${e.message}")
                         toast("Lỗi phản hồi từ server!")
                     }
                 }
             }
-
-
         })
     }
+
     private fun toast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
-
-
-
 }

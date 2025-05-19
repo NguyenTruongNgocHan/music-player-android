@@ -33,9 +33,14 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    packagingOptions {
-        exclude("META-INF/DEPENDENCIES")
+
+    packaging {
+        resources {
+            excludes += "META-INF/DEPENDENCIES"
+        }
     }
+
+
     buildFeatures {
         viewBinding = true
     }
@@ -60,7 +65,8 @@ dependencies {
     implementation("com.airbnb.android:lottie:6.0.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.android.material:material:1.11.0'")
+    implementation("com.google.android.material:material:1.11.0")
+
 
     // YouTube Data API
     implementation ("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
