@@ -3,9 +3,7 @@ package com.example.frontend
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -23,7 +21,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnForgotPassword: Button
 
     private val client = OkHttpClient()
-    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net"
+    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net/api"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,12 +40,13 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnLogin.setOnClickListener {
-            val email = emailInput.text.toString()
+            val email = emailInput.text.toString().trim()
             val password = passwordInput.text.toString()
-            if (email.isNotEmpty() && password.isNotEmpty()) {
-                login(email, password)
-            } else {
+
+            if (email.isEmpty() || password.isEmpty()) {
                 toast("Vui lòng nhập đầy đủ email và mật khẩu")
+            } else {
+                login(email, password)
             }
         }
 
@@ -79,13 +78,18 @@ class LoginActivity : AppCompatActivity() {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val rawBody = response.body?.string() ?: ""
+                val body = response.body?.string() ?: ""
+
+                Log.d("LOGIN_RESPONSE", body)
 
                 runOnUiThread {
-                    try {
-                        Log.d("LOGIN_BODY", "Server trả về: $rawBody")
+                    if (!response.isSuccessful) {
+                        toast("Lỗi server: ${response.code}")
+                        return@runOnUiThread
+                    }
 
-                        val json = JSONObject(rawBody)
+                    try {
+                        val json = JSONObject(body)
                         when (json.optString("status")) {
                             "success" -> {
                                 toast("Đăng nhập thành công!")
@@ -97,8 +101,8 @@ class LoginActivity : AppCompatActivity() {
                             else -> toast("Lỗi không xác định: ${json.optString("message")}")
                         }
                     } catch (e: Exception) {
-                        Log.e("LOGIN_JSON_ERROR", "Lỗi JSON hoặc context: ${e.message}")
-                        toast("Lỗi phản hồi từ server!")
+                        Log.e("LOGIN_JSON_ERROR", "Lỗi JSON: ${e.message}")
+                        toast("Phản hồi không hợp lệ từ server!")
                     }
                 }
             }
@@ -107,5 +111,10 @@ class LoginActivity : AppCompatActivity() {
 
     private fun toast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 }

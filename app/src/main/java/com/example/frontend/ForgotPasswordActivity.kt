@@ -27,7 +27,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private var verifiedOTP: String = ""
 
     private val client = OkHttpClient()
-    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net"
+    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net/api"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
