@@ -2,14 +2,11 @@ package com.example.frontend
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.io.IOException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class LoginActivity : AppCompatActivity() {
 
@@ -20,12 +17,13 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnGuest: Button
     private lateinit var btnForgotPassword: Button
 
-    private val client = OkHttpClient()
-    private val baseUrl = "https://us-central1-musicplayer-otp.cloudfunctions.net/api"
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.login)
+
+        auth = FirebaseAuth.getInstance()
 
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
@@ -34,20 +32,20 @@ class LoginActivity : AppCompatActivity() {
         btnGuest = findViewById(R.id.btnGuest)
         btnForgotPassword = findViewById(R.id.btnForgotPassword)
 
-        btnSignUp.setOnClickListener {
-            startActivity(Intent(this, SignUpActivity::class.java))
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
-        }
-
         btnLogin.setOnClickListener {
             val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString()
+            val password = passwordInput.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {
                 toast("Vui lòng nhập đầy đủ email và mật khẩu")
             } else {
-                login(email, password)
+                loginWithFirebase(email, password)
             }
+        }
+
+        btnSignUp.setOnClickListener {
+            startActivity(Intent(this, SignUpActivity::class.java))
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
 
         btnGuest.setOnClickListener {
@@ -61,52 +59,32 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun login(email: String, password: String) {
-        val json = JSONObject().apply {
-            put("email", email)
-            put("password", password)
-        }
-
-        val request = Request.Builder()
-            .url("$baseUrl/loginUser")
-            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
-            .build()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { toast("Lỗi kết nối server: ${e.message}") }
+    private fun loginWithFirebase(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                toast("Đăng nhập thành công")
+                loadUserInfo(email)
             }
+            .addOnFailureListener {
+                toast("Đăng nhập thất bại: ${it.message}")
+            }
+    }
 
-            override fun onResponse(call: Call, response: Response) {
-                val body = response.body?.string() ?: ""
-
-                Log.d("LOGIN_RESPONSE", body)
-
-                runOnUiThread {
-                    if (!response.isSuccessful) {
-                        toast("Lỗi server: ${response.code}")
-                        return@runOnUiThread
-                    }
-
-                    try {
-                        val json = JSONObject(body)
-                        when (json.optString("status")) {
-                            "success" -> {
-                                toast("Đăng nhập thành công!")
-                                startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                                finish()
-                            }
-                            "invalid_password" -> toast("Sai mật khẩu!")
-                            "no_user" -> toast("Không tìm thấy tài khoản!")
-                            else -> toast("Lỗi không xác định: ${json.optString("message")}")
-                        }
-                    } catch (e: Exception) {
-                        Log.e("LOGIN_JSON_ERROR", "Lỗi JSON: ${e.message}")
-                        toast("Phản hồi không hợp lệ từ server!")
-                    }
+    private fun loadUserInfo(email: String) {
+        val db = Firebase.firestore
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    // Lấy thêm role, avatar, playlist nếu cần
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                } else {
+                    toast("Không tìm thấy thông tin người dùng")
                 }
             }
-        })
+            .addOnFailureListener {
+                toast("Lỗi khi lấy thông tin người dùng")
+            }
     }
 
     private fun toast(msg: String) {

@@ -67,6 +67,10 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.material:material:1.11.0")
 
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.10.1")
+
+
 
     // YouTube Data API
     implementation ("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
@@ -91,4 +95,12 @@ dependencies {
     // ViewModel
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
 
+
 }
+
+apply(plugin = "com.google.gms.google-services")
+
+
+
+
+
