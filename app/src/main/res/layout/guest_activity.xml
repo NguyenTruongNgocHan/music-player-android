@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Header: Search + Avatar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:background="@drawable/search_view_background"
+            android:queryHint="Tìm bài hát..."
+            android:iconifiedByDefault="false"/>
+
+        <ImageButton
+            android:id="@+id/btnGuestAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="12dp"
+            android:src="@drawable/default_avt"
+            android:background="@android:color/transparent"
+            android:scaleType="centerCrop"
+            android:contentDescription="Guest Avatar"/>
+    </LinearLayout>
+
+    <!-- Nội dung chính: có thể là danh sách bài hát demo hoặc fragment -->
+    <FrameLayout
+        android:id="@+id/guestMainContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- Mini Player ở dưới -->
+    <include
+        layout="@layout/view_mini_player"
+        android:id="@+id/miniPlayer"
+        android:visibility="gone" />
+
+</LinearLayout>
