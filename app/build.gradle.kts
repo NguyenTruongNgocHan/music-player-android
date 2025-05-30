@@ -67,10 +67,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.material:material:1.11.0")
 
-    implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
-    implementation("com.google.firebase:firebase-firestore-ktx:24.10.1")
-
-
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation("com.google.firebase:firebase-firestore")
 
     // YouTube Data API
     implementation ("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
@@ -79,6 +78,12 @@ dependencies {
     // ExoPlayer for audio playback
     implementation ("com.google.android.exoplayer:exoplayer-core:2.19.1")
     implementation ("com.google.android.exoplayer:exoplayer-ui:2.19.1")
+    implementation ("androidx.media3:media3-exoplayer:1.3.0")
+    implementation ("androidx.media3:media3-ui:1.3.0")
+    implementation ("com.github.teamnewpipe:NewPipeExtractor:v0.24.6")
+    implementation ("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
+    implementation ("com.github.maxrave-dev:kotlin-youtubeExtractor:0.0.7")
 
     // Kotlin Coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

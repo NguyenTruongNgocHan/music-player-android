@@ -5,6 +5,6 @@ data class Song(
     val title: String,
     val artist: String,
     val image: Int,
-    val audio: Int,
+    val audio: String,
     var isLiked: Boolean = false
 )

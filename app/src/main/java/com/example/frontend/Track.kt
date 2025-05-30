@@ -1,13 +1,15 @@
 package com.example.frontend
 
+import java.io.Serializable
+
 data class Track(
     val id: String,
     val title: String,
     val artist: String,
-    val duration: String, // formatted as "3:45"
+    val duration: String,
     val thumbnailUrl: String,
     var isPlaying: Boolean = false
-) {
+) : Serializable {
     companion object {
         // For loading states
         fun createLoadingPlaceholder() = Track(

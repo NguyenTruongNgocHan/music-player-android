@@ -22,7 +22,7 @@ class QueueViewModel(private val repository: YouTubeService) : ViewModel() {
     private fun loadInitialQueue() {
         viewModelScope.launch {
             _isLoading.value = true
-            val popularSongs = repository.searchSongs("popolar songs")
+            val popularSongs = repository.searchSongs("Jojo fighting gold jonathan")
             _queue.value = popularSongs.take(10) // Initialize with 5 popular songs
             _isLoading.value = false
         }

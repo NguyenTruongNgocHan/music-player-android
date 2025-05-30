@@ -6,13 +6,12 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
-import com.example.frontend.R
 import com.example.frontend.databinding.ActivityMainBinding
 import kotlin.math.abs
 
@@ -21,7 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var avatarButton: ImageButton
     private lateinit var navigationView: NavigationView
-    private lateinit var miniPlayerContainer: LinearLayout
+    private lateinit var miniPlayerContainer: ConstraintLayout
 
     private lateinit var binding: ActivityMainBinding
 
@@ -31,10 +30,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         drawerLayout = findViewById(R.id.drawerLayout)
-        avatarButton = findViewById(R.id.imageButton)
+        avatarButton = findViewById(R.id.btnAvatar)
         navigationView = findViewById(R.id.navView)
 
-        miniPlayerContainer = findViewById(R.id.miniPlayerContainer)
+        miniPlayerContainer = findViewById(R.id.miniPlayer)
 
         avatarButton.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
