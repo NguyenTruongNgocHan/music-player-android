@@ -78,27 +78,28 @@ dependencies {
     // ExoPlayer for audio playback
     implementation ("com.google.android.exoplayer:exoplayer-core:2.19.1")
     implementation ("com.google.android.exoplayer:exoplayer-ui:2.19.1")
-    implementation ("androidx.media3:media3-exoplayer:1.3.0")
-    implementation ("androidx.media3:media3-ui:1.3.0")
+    implementation ("androidx.media3:media3-exoplayer:1.7.1")
+    implementation ("androidx.media3:media3-session:1.7.1")
+    implementation ("androidx.media3:media3-ui:1.7.1")
     implementation ("com.github.teamnewpipe:NewPipeExtractor:v0.24.6")
     implementation ("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
-    implementation ("com.google.android.gms:play-services-auth:20.7.0")
+    implementation ("com.google.android.gms:play-services-auth:21.3.0")
     implementation ("com.github.maxrave-dev:kotlin-youtubeExtractor:0.0.7")
 
     // Kotlin Coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Lifecycle components
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.9.0")
 
     // RecyclerView
-    implementation ("androidx.recyclerview:recyclerview:1.3.2")
+    implementation ("androidx.recyclerview:recyclerview:1.4.0")
 
     // Glide for image loading
     implementation ("com.github.bumptech.glide:glide:4.16.0")
 
     // ViewModel
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0")
 
 
 }

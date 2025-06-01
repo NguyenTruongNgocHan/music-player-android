@@ -1,17 +1,25 @@
 package com.example.frontend
 
+import android.content.ComponentName
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.frontend.databinding.ActivityPlayerBinding
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import com.bumptech.glide.Glide
-import com.maxrave.kotlinyoutubeextractor.YTExtractor
-import kotlinx.coroutines.*
-import org.schabi.newpipe.extractor.NewPipe
+import com.example.frontend.databinding.ActivityPlayerBinding
+import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class PlayerActivity : AppCompatActivity() {
@@ -25,6 +33,7 @@ class PlayerActivity : AppCompatActivity() {
     private var isShuffle = false
     private var isRepeat = false
     private var isPlaying = false
+    private var isChangingTrack = false
 
     private var songList: List<Track> = emptyList()
 
@@ -42,10 +51,17 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Start PlayerService to ensure background playback
+        val serviceIntent = Intent(this, PlayerService::class.java)
+        startService(serviceIntent)
+
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Create local player for UI control
         exoPlayer = ExoPlayer.Builder(this).build()
+
         val receivedQueue = intent.getSerializableExtra("queue") as? ArrayList<Track>
         val selectedTrackId = intent.getStringExtra("track_id")
 
@@ -64,7 +80,7 @@ class PlayerActivity : AppCompatActivity() {
         updateRepeatButton()
         updatePlayButtonIcon()
         setupListeners()
-        setupHeartIcon()
+        updateHeartIconState()
     }
 
     private fun setupListeners() {
@@ -78,6 +94,9 @@ class PlayerActivity : AppCompatActivity() {
             }
             isPlaying = !isPlaying
             updatePlayButtonIcon()
+
+            // Notify service about playback state
+            notifyServicePlaybackState()
         }
 
         binding.nextButton.setOnClickListener { playNextTrack() }
@@ -95,8 +114,8 @@ class PlayerActivity : AppCompatActivity() {
 
         binding.favoriteButton.setOnClickListener {
             val song = songList[currentTrackIndex]
-            song.isPlaying = !song.isPlaying
-            setupHeartIcon()
+            song.isLiked = !song.isLiked
+            updateHeartIconState()
         }
 
         binding.progressBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
@@ -113,14 +132,19 @@ class PlayerActivity : AppCompatActivity() {
             }
         })
 
-        exoPlayer.addListener(object : androidx.media3.common.Player.Listener {
+        exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
-                if (state == ExoPlayer.STATE_ENDED) {
-                    if (isRepeat) {
-                        exoPlayer.seekTo(0)
-                        exoPlayer.play()
-                    } else {
-                        playNextTrack()
+                when (state) {
+                    Player.STATE_ENDED -> {
+                        if (isRepeat) {
+                            exoPlayer.seekTo(0)
+                            exoPlayer.play()
+                        } else {
+                            playNextTrack()
+                        }
+                    }
+                    Player.STATE_READY -> {
+                        binding.totalTime.text = formatTime(exoPlayer.duration)
                     }
                 }
             }
@@ -132,23 +156,50 @@ class PlayerActivity : AppCompatActivity() {
         updateTrack(currentTrack)
 
         coroutineScope.launch {
-            val youTubeService = YouTubeService(this@PlayerActivity)
-            val streamUrl = youTubeService.getAudioStreamUrl(this@PlayerActivity, currentTrack.id)
+            try {
+                val youTubeService = YouTubeService(this@PlayerActivity)
+                val streamUrl =
+                    youTubeService.getAudioStreamUrl(this@PlayerActivity, currentTrack.id)
 
-            if (streamUrl != null) {
-                exoPlayer.clearMediaItems()
-                val mediaItem = MediaItem.fromUri(streamUrl)
-                exoPlayer.setMediaItem(mediaItem)
-                exoPlayer.prepare()
-                exoPlayer.play()
-                isPlaying = true
-                updatePlayButtonIcon()
-                handler.post(updateSeekBarRunnable)
-            } else {
-                Toast.makeText(this@PlayerActivity, "Unable to load audio", Toast.LENGTH_SHORT).show()
+                if (streamUrl != null) {
+                    exoPlayer.clearMediaItems()
+                    val mediaItem = MediaItem.fromUri(streamUrl)
+                    exoPlayer.setMediaItem(mediaItem)
+                    exoPlayer.prepare()
+                    exoPlayer.play()
+                    isPlaying = true
+                    updatePlayButtonIcon()
+                    handler.post(updateSeekBarRunnable)
+
+                    // Notify service about the current track
+                    notifyServiceCurrentTrack()
+                } else {
+                    Toast.makeText(this@PlayerActivity, "Unable to load audio", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@PlayerActivity, "Error: ${e.message}", Toast.LENGTH_SHORT)
+                    .show()
+            } finally {
+                isChangingTrack = false
             }
         }
+    }
 
+    private fun notifyServicePlaybackState() {
+        val intent = Intent(this, PlayerService::class.java).apply {
+            action = if (isPlaying) "PLAY" else "PAUSE"
+        }
+        startService(intent)
+    }
+
+    private fun notifyServiceCurrentTrack() {
+        val intent = Intent(this, PlayerService::class.java).apply {
+            action = "SET_TRACK"
+            putExtra("track", songList[currentTrackIndex])
+            putExtra("position", exoPlayer.currentPosition)
+        }
+        startService(intent)
     }
 
     private fun formatTime(timeMs: Long): String {
@@ -158,6 +209,9 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun playNextTrack() {
+        if (isChangingTrack) return
+        isChangingTrack = true
+
         currentTrackIndex = if (isShuffle) {
             Random.nextInt(songList.size)
         } else {
@@ -165,23 +219,29 @@ class PlayerActivity : AppCompatActivity() {
         }
         updateTrack(songList[currentTrackIndex])
         playCurrentTrack()
-        setupHeartIcon()
+        isPlaying = true
+        updatePlayButtonIcon()
+        updateHeartIconState()
     }
 
     private fun playPreviousTrack() {
+        if (isChangingTrack) return
+        isChangingTrack = true
+
         currentTrackIndex = if (currentTrackIndex - 1 < 0) songList.size - 1 else currentTrackIndex - 1
         updateTrack(songList[currentTrackIndex])
         playCurrentTrack()
-        setupHeartIcon()
+        isPlaying = true
+        updatePlayButtonIcon()
+        updateHeartIconState()
     }
 
     private fun updateTrack(track: Track) {
-        // Load the thumbnailUrl into albumArt
         Glide.with(this)
             .load(track.thumbnailUrl)
             .centerCrop()
-            .placeholder(R.drawable.example)   // fallback while loading
-            .error(R.drawable.example)         // fallback on error
+            .placeholder(R.drawable.example)
+            .error(R.drawable.example)
             .into(binding.albumArt)
 
         binding.songTitle.text = track.title
@@ -189,10 +249,13 @@ class PlayerActivity : AppCompatActivity() {
         binding.progressBar.progress = 0
     }
 
-    private fun setupHeartIcon() {
-        val song = songList[currentTrackIndex]
-        val icon = if (song.isPlaying) R.drawable.heart_filled else R.drawable.heart_empty
-        binding.favoriteButton.setImageResource(icon)
+    private fun updateHeartIconState() {
+        val iconRes = if (songList[currentTrackIndex].isLiked) {
+            R.drawable.heart_filled
+        } else {
+            R.drawable.heart_empty
+        }
+        binding.favoriteButton.setImageResource(iconRes)
     }
 
     private fun updateShuffleButton() {
@@ -212,12 +275,6 @@ class PlayerActivity : AppCompatActivity() {
     private fun updatePlayButtonIcon() {
         val icon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
         binding.playButton.setImageResource(icon)
-    }
-
-    private fun formatTime(ms: Int): String {
-        val minutes = ms / 1000 / 60
-        val seconds = (ms / 1000) % 60
-        return String.format("%02d:%02d", minutes, seconds)
     }
 
     override fun onDestroy() {
