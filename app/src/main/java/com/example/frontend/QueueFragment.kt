@@ -1,5 +1,6 @@
 package com.example.frontend
 
+import android.content.Intent
 import androidx.fragment.app.viewModels
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -63,12 +64,16 @@ class QueueFragment : BottomSheetDialogFragment() {
         }
 
         adapter.setOnItemClickListener { position ->
-            // Handle track selection
             val queue = viewModel.queue.value ?: return@setOnItemClickListener
             if (position in queue.indices) {
-                // Update playing state
-                adapter.currentlyPlayingIndex = position
-                adapter.notifyDataSetChanged()
+                val selectedTrack = queue[position]
+
+                // Start PlayerActivity and pass the selected track ID and the queue
+                val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                    putExtra("track_id", selectedTrack.id)
+                    putExtra("queue", ArrayList(queue))
+                }
+                startActivity(intent)
             }
         }
     }

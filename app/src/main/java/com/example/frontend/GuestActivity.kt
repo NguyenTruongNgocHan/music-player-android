@@ -52,7 +52,7 @@ class GuestActivity : AppCompatActivity() {
             .commit()
     }
 
-    fun playTrack(track: Track) {
+    /*fun playTrack(track: Track) {
         miniPlayer.visibility = View.VISIBLE
 
         val title = miniPlayer.findViewById<TextView>(R.id.trackTitle)
@@ -84,6 +84,6 @@ class GuestActivity : AppCompatActivity() {
         }
 
         Toast.makeText(this, "Đang phát: ${track.title}", Toast.LENGTH_SHORT).show()
-    }
+    }*/
 
 }
