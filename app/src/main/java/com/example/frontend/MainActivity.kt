@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         drawerLayout = findViewById(R.id.drawerLayout)
-        avatarButton = findViewById(R.id.imageButton)
+        avatarButton = findViewById(R.id.btnAvatar)
         navigationView = findViewById(R.id.navView)
 
         miniPlayerContainer = findViewById(R.id.miniPlayerContainer)

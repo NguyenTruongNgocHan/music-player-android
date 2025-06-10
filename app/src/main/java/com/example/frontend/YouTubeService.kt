@@ -33,12 +33,16 @@ class YouTubeService(private val context: Context) {
 
             search.items.mapNotNull { item ->
                 item.id?.videoId?.let { videoId ->
+                    val audioUrl = getAudioStreamUrl(videoId) ?: return@mapNotNull null
+
                     Track(
                         id = videoId,
                         title = item.snippet.title ?: "Unknown",
                         artist = item.snippet.channelTitle ?: "Unknown",
                         duration = "0:00", // We'll implement duration later
-                        thumbnailUrl = item.snippet.thumbnails?.default?.url ?: ""
+                        thumbnailUrl = item.snippet.thumbnails?.default?.url ?: "",
+                        audioUrl = audioUrl
+
                     )
                 }
             }
@@ -50,8 +54,12 @@ class YouTubeService(private val context: Context) {
     }
 
     suspend fun getAudioStreamUrl(videoId: String): String? {
-        // In practice you'd need to extract actual audio stream URL
-        // This often requires additional libraries like youtube-extractor
-        return "https://example.com/stream/$videoId" // Placeholder
+        val sampleUrls = listOf(
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+        )
+        return sampleUrls.random()
     }
+
 }

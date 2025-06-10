@@ -49,7 +49,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnGuest.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, GuestActivity::class.java))
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
 

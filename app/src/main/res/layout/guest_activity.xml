@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/loading_bg">
 
     <!-- Header: Search + Avatar -->
     <LinearLayout
@@ -21,7 +22,7 @@
             android:layout_height="48dp"
             android:background="@drawable/search_view_background"
             android:queryHint="Tìm bài hát..."
-            android:iconifiedByDefault="false"/>
+            android:iconifiedByDefault="false" />
 
         <ImageButton
             android:id="@+id/btnGuestAvatar"
@@ -34,17 +35,16 @@
             android:contentDescription="Guest Avatar"/>
     </LinearLayout>
 
-    <!-- Nội dung chính: có thể là danh sách bài hát demo hoặc fragment -->
+    <!-- Nội dung chính -->
     <FrameLayout
         android:id="@+id/guestMainContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
-    <!-- Mini Player ở dưới -->
+    <!-- Mini Player -->
     <include
         layout="@layout/view_mini_player"
         android:id="@+id/miniPlayer"
-        android:visibility="gone" />
-
+        android:visibility="gone"/>
 </LinearLayout>

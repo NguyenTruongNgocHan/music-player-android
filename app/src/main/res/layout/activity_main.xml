@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/loading_bg">
 
     <!-- Nội dung chính của App -->
     <LinearLayout
@@ -41,13 +42,24 @@
                 />
         </LinearLayout>
 
-        <!-- Fragment chính hoặc ViewPager (home, playlist...) -->
-        <FrameLayout
-            android:id="@+id/mainContent"
+        <!-- Các nội dung khác -->
+        <LinearLayout
+            android:id="@+id/miniPlayerContainer"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="@color/white" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_gravity="bottom">
+
+            <!-- Put song title, play/pause button etc. here -->
+            <TextView
+                android:id="@+id/miniPlayerText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Swipe up to view queue 🎵"/>
+        </LinearLayout>
 
         <!-- MiniPlayer ở cuối màn -->
         <include

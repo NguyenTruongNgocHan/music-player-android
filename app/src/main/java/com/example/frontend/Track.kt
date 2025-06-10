@@ -5,6 +5,7 @@ data class Track(
     val title: String,
     val artist: String,
     val duration: String, // formatted as "3:45"
+    val audioUrl: String, //adding variable for file MP3 link
     val thumbnailUrl: String,
     var isPlaying: Boolean = false
 ) {
@@ -15,7 +16,8 @@ data class Track(
             title = "Loading...",
             artist = "Please wait",
             duration = "0:00",
-            thumbnailUrl = ""
+            thumbnailUrl = "" ,
+            audioUrl = ""
         )
     }
 }
