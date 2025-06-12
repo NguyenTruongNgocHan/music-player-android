@@ -13,6 +13,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        vectorDrawables.useSupportLibrary = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,6 +44,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+
     }
 }
 
@@ -100,6 +102,8 @@ dependencies {
 
     // ViewModel
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0")
+
+
 
 
 }

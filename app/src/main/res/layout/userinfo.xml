@@ -2,12 +2,15 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/loading_bg"
-    android:padding="24dp">
+    android:padding="0dp">
 
-    <!-- Scroll các ô nhập -->
+
+
+    <!-- ScrollView chứa nội dung -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="0dp"
@@ -21,181 +24,88 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <!-- Avatar -->
             <ImageView
                 android:id="@+id/avatarInSidebar"
-                android:layout_width="122dp"
-                android:layout_height="111dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:layout_marginTop="0dp"
                 android:background="@drawable/circle_background"
-                android:scaleType="centerCrop"
-                android:src="@drawable/default_avt"
                 android:clickable="true"
-                android:focusable="true" />
+                android:elevation="4dp"
+                android:focusable="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/default_avt" />
 
-            <!-- Username -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/usernameLayout"
-                android:layout_width="0dp"
+            <!-- Ô Email -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:hint="Tên người dùng"
-                app:boxBackgroundMode="outline"
-                app:boxBackgroundColor="@android:color/transparent"
-                app:boxStrokeColor="@color/gray"
-                app:layout_constraintTop_toBottomOf="@id/avatarInSidebar"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/usernameInput"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:textColor="@android:color/black"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
 
-            <!-- Email -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/emailLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Email"
-                app:layout_constraintTop_toBottomOf="@id/usernameLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/emailInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:inputType="textEmailAddress"
-                    android:textColor="@android:color/black"
-                    android:enabled="false" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    <!-- Label -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="#A8A8A8"
+                        android:textSize="13sp" />
 
-            <!-- Name -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/nameLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Họ và tên"
-                app:layout_constraintTop_toBottomOf="@id/emailLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/nameInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:inputType="textPersonName"
-                    android:textColor="@android:color/black" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    <!-- Trường nhập email -->
+                    <EditText
+                        android:id="@+id/emailInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:enabled="false"
+                        android:hint="Nhập email"
+                        android:inputType="textEmailAddress"
+                        android:paddingTop="4dp"
+                        android:textColor="@android:color/black"
+                        android:textColorHint="#A8A8A8"
+                        android:textSize="16sp" /> <!-- nếu chỉ hiển thị, không cho sửa -->
 
-            <!-- Gender -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/genderLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Giới tính"
-                app:layout_constraintTop_toBottomOf="@id/nameLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/genderInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:inputType="text"
-                    android:textColor="@android:color/black" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    <!-- Đường gạch underline động -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_gravity="start"
+                        android:background="#A8A8A8"
+                        android:scaleX="0" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-            <!-- Birthdate -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/birthdateLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Ngày sinh (dd/mm/yyyy)"
-                app:layout_constraintTop_toBottomOf="@id/genderLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/birthdateInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:inputType="date"
-                    android:textColor="@android:color/black" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Phone -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/phoneLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Số điện thoại"
-                app:layout_constraintTop_toBottomOf="@id/birthdateLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/phoneInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:inputType="phone"
-                    android:textColor="@android:color/black" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Bio -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/bioLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Giới thiệu bản thân"
-                app:layout_constraintTop_toBottomOf="@id/phoneLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/bioInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:background="@drawable/whiteframe_button"
-                    android:padding="12dp"
-                    android:inputType="textMultiLine"
-                    android:gravity="top"
-                    android:maxLines="5"
-                    android:textColor="@android:color/black" />
-            </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
     </ScrollView>
 
-    <!-- Nút Lưu nằm cố định ở đáy -->
-    <Button
+    <!-- Nút lưu -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
+        style="@style/Widget.MaterialComponents.Button"
         android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:text="Lưu thông tin"
-        android:background="@drawable/btn_login"
-        android:textColor="@android:color/white"
+        android:layout_height="50dp"
+        android:text="Lưu"
+        android:textAllCaps="false"
+        android:textColor="@android:color/black"
+        android:backgroundTint="@color/white"
+        app:cornerRadius="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="12dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
