@@ -10,9 +10,11 @@ import com.example.frontend.LoginActivity
 import com.example.frontend.R
 
 class LoadingActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.loading) // Đảm bảo đúng tên file XML
+
 
         // Chờ 3 giây rồi chuyển sang màn hình Login
         Handler(Looper.getMainLooper()).postDelayed({
