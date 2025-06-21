@@ -54,18 +54,18 @@
             android:layout_gravity="bottom">
 
             <!-- Put song title, play/pause button etc. here -->
-            <TextView
-                android:id="@+id/miniPlayerText"
+            <FrameLayout
+                android:id="@+id/fragmentContainer"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="Swipe up to view queue 🎵"/>
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- MiniPlayer ở cuối màn -->
+            <include
+                layout="@layout/view_mini_player"
+                android:id="@+id/miniPlayer"/>
         </LinearLayout>
-
-        <!-- MiniPlayer ở cuối màn -->
-        <include
-            layout="@layout/view_mini_player"
-            android:id="@+id/miniPlayer"/>
-
+        
     </LinearLayout>
 
     <!-- Navigation Drawer -->

@@ -48,6 +48,10 @@ class QueueFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        arguments?.getString("search_query")?.let { query ->
+            viewModel.loadInitialQueue(query)
+        }
+
         setupRecyclerView()
         setupObservers()
     }

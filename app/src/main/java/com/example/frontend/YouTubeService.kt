@@ -126,4 +126,50 @@ class YouTubeService(private val context: Context) {
         }
         return "0:00"
     }
+
+    suspend fun fetchTopMusicChannels(context: Context): List<Channel> = withContext(Dispatchers.IO) {
+        try {
+            // Step 1: Search for popular music channels
+            val searchResponse = youtube.search().list("snippet").apply {
+                type = "channel"
+                videoCategoryId = "10" // Music category ID
+                order = "viewCount"    // Get most viewed/popular channels
+                maxResults = 20        // Get enough results to find quality channels
+                key = context.getString(R.string.youtube_api_key)
+            }.execute()
+
+            // Extract channel IDs from search results
+            val channelIds = searchResponse.items.mapNotNull {
+                it.snippet?.channelId
+            }.distinct()
+
+            if (channelIds.isEmpty()) return@withContext emptyList()
+
+            // Step 2: Get detailed channel information
+            val channelsResponse = youtube.channels().list("snippet,statistics").apply {
+                id = channelIds.joinToString(",")
+                key = context.getString(R.string.youtube_api_key)
+            }.execute()
+
+            // Filter and sort channels by popularity
+            return@withContext channelsResponse.items
+                .map { item ->
+                    // Get subscriber count as Long
+                    val subCount = item.statistics?.subscriberCount?.toLong() ?: 0L
+                    item to subCount
+                }
+                .filter { (_, count) -> count > 1000000 } // Filter by >1M subscribers
+                .sortedByDescending { (_, count) -> count } // Sort by subscriber count
+                .take(10) // Take top 10 most subscribed channels
+                .map { (item, _) ->
+                    Channel(
+                        name = item.snippet?.title ?: "Unknown",
+                        avatarUrl = item.snippet?.thumbnails?.high?.url ?: ""
+                    )
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching channels: ${e.message}", e)
+            emptyList()
+        }
+    }
 }

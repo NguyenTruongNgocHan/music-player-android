@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.ImageButton
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -22,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navigationView: NavigationView
     private lateinit var miniPlayerContainer: ConstraintLayout
     private lateinit var binding: ActivityMainBinding
+    private var lastSearchQuery: String = "popular song"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +41,11 @@ class MainActivity : AppCompatActivity() {
         avatarButton.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
+
+        //load recommendation songs
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, HomeFragment())
+            .commit()
 
         // Get current logged-in email
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""
@@ -59,6 +66,28 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
+
+        val searchView = binding.searchView
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (!query.isNullOrBlank()) {
+                    lastSearchQuery = query
+
+                    val queueFragment = QueueFragment().apply {
+                        arguments = Bundle().apply {
+                            putString("search_query", query)
+                        }
+                    }
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragmentContainer, queueFragment)
+                        .addToBackStack(null)
+                        .commit()
+                }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean = false
+        })
 
         // Detect swipe up gesture on mini player
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
@@ -91,8 +120,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showQueue() {
-        val queueFragment = QueueFragment()
-        queueFragment.show(supportFragmentManager, queueFragment.tag)
+        val existing = supportFragmentManager.findFragmentByTag("QUEUE_FRAGMENT")
+        if (existing == null) {
+            val queueFragment = QueueFragment().apply {
+                arguments = Bundle().apply {
+                    putString("search_query", lastSearchQuery)
+                }
+            }
+            queueFragment.show(supportFragmentManager, "QUEUE_FRAGMENT")
+        }
     }
 
     private fun showLogoutDialog() {
