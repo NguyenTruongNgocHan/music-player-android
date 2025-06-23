@@ -207,15 +207,10 @@ class SignUpActivity : AppCompatActivity() {
                                     .show()
                             }
                             "success" -> {
-                                AlertDialog.Builder(this@SignUpActivity)
-                                    .setTitle("Đăng ký thành công")
-                                    .setMessage("Bạn muốn đăng nhập ngay không?")
-                                    .setPositiveButton("Đăng nhập") { _, _ ->
-                                        startActivity(Intent(this@SignUpActivity, LoginActivity::class.java))
-                                        finish()
-                                    }
-                                    .setNegativeButton("Thoát") { _, _ -> finishAffinity() }
-                                    .show()
+                                val intent = Intent(this@SignUpActivity, UserInfoActivity::class.java)
+                                intent.putExtra("email", email)
+                                startActivity(intent)
+                                finish()
                             }
                             else -> toast("Đăng ký thất bại: ${json.optString("message")}")
                         }
