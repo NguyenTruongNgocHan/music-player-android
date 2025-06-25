@@ -16,7 +16,6 @@ class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
     private lateinit var trackAdapter: TrackAdapter
-    private lateinit var channelAdapter: ChannelAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -30,7 +29,6 @@ class HomeFragment : Fragment() {
 
         setupRecyclerViews()
         fetchFeaturedTracks()
-        fetchTopChannels()
     }
 
     private fun setupRecyclerViews() {
@@ -47,14 +45,6 @@ class HomeFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = trackAdapter
         }
-
-        channelAdapter = ChannelAdapter(emptyList()) { channel ->
-            Toast.makeText(requireContext(), "Clicked ${channel.name}", Toast.LENGTH_SHORT).show()
-        }
-        binding.recyclerArtists.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-            adapter = channelAdapter
-        }
     }
 
     private fun fetchFeaturedTracks() {
@@ -67,14 +57,6 @@ class HomeFragment : Fragment() {
                 youTubeService.searchSongs("popular music")
             }
             trackAdapter.submitList(tracks)
-        }
-    }
-
-    private fun fetchTopChannels() {
-        lifecycleScope.launch {
-            val youTubeService = YouTubeService(requireContext())
-            val channels = youTubeService.fetchTopMusicChannels(requireContext())
-            channelAdapter.updateData(channels)
         }
     }
 }
