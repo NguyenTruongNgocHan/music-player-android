@@ -4,61 +4,61 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.View
 import android.widget.ImageButton
-import androidx.appcompat.widget.SearchView
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import com.bumptech.glide.Glide
+import com.example.frontend.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
-import com.example.frontend.databinding.ActivityMainBinding
 import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityMainBinding
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var avatarButton: ImageButton
     private lateinit var navigationView: NavigationView
-    private lateinit var miniPlayerContainer: ConstraintLayout
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var miniPlayerView: ConstraintLayout
     private var lastSearchQuery: String = "popular song"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // View bindings
+        // Bind views
         drawerLayout = binding.drawerLayout
         avatarButton = binding.btnAvatar
         navigationView = binding.navView
-        miniPlayerContainer = binding.miniPlayer.root as ConstraintLayout // ✅ FIXED
+        miniPlayerView = binding.miniPlayer.root as ConstraintLayout
 
-        // Open sidebar when clicking avatar
+        // Set up sidebar toggle
         avatarButton.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        //load recommendation songs
+        // Load initial HomeFragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, HomeFragment())
             .commit()
 
-        // Get current logged-in email
-        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""
-
-        // Sidebar menu item click
+        // Sidebar actions
+        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email.orEmpty()
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_account_info -> {
-                    val intent = Intent(this, UserInfoActivity::class.java)
-                    intent.putExtra("email", currentUserEmail)
-                    startActivity(intent)
+                    startActivity(Intent(this, UserInfoActivity::class.java).apply {
+                        putExtra("email", currentUserEmail)
+                    })
                 }
-
                 R.id.nav_logout -> {
                     showLogoutDialog()
                 }
@@ -67,12 +67,12 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        // Search actions
         val searchView = binding.searchView
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrBlank()) {
                     lastSearchQuery = query
-
                     val queueFragment = QueueFragment().apply {
                         arguments = Bundle().apply {
                             putString("search_query", query)
@@ -86,10 +86,10 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
-            override fun onQueryTextChange(newText: String?): Boolean = false
+            override fun onQueryTextChange(newText: String?) = false
         })
 
-        // Detect swipe up gesture on mini player
+        // Swipe gesture on mini player
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             private val SWIPE_THRESHOLD = 100
             private val SWIPE_VELOCITY_THRESHOLD = 100
@@ -108,14 +108,37 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Attach swipe + click to mini player container
-        miniPlayerContainer.setOnTouchListener { _, event ->
+        miniPlayerView.setOnTouchListener { _, event ->
             gestureDetector.onTouchEvent(event)
             true
         }
 
-        miniPlayerContainer.setOnClickListener {
+        miniPlayerView.setOnClickListener {
             showQueue()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateMiniPlayerUI()
+    }
+
+    private fun updateMiniPlayerUI() {
+        val track = MiniPlayerManager.getCurrentTrack()
+        if (track != null) {
+            miniPlayerView.visibility = View.VISIBLE
+
+            val title = miniPlayerView.findViewById<TextView>(R.id.trackTitle)
+            val artist = miniPlayerView.findViewById<TextView>(R.id.trackArtist)
+            val duration = miniPlayerView.findViewById<TextView>(R.id.trackDuration)
+            val thumbnail = miniPlayerView.findViewById<ImageView>(R.id.trackThumbnail)
+
+            title.text = track.title
+            artist.text = track.artist
+            duration.text = "3:45" // Optional: set actual duration later
+            Glide.with(this).load(track.thumbnailUrl).into(thumbnail)
+        } else {
+            //miniPlayerView.visibility = View.GONE
         }
     }
 

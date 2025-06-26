@@ -6,20 +6,19 @@
     android:layout_height="match_parent"
     android:background="@drawable/loading_bg">
 
-    <!-- Main App Content -->
-    <RelativeLayout
+    <!-- Nội dung chính của App -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <!-- Header: Search + Avatar -->
         <LinearLayout
-            android:id="@+id/headerContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="12dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:layout_alignParentTop="true">
+            android:orientation="horizontal">
 
             <androidx.appcompat.widget.SearchView
                 android:id="@+id/searchView"
@@ -41,23 +40,31 @@
                 android:contentDescription="Avatar"/>
         </LinearLayout>
 
-        <!-- Fragment Container -->
-        <FrameLayout
-            android:id="@+id/fragmentContainer"
+        <!-- Các nội dung khác -->
+        <LinearLayout
+            android:id="@+id/miniPlayerContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/headerContainer"
-            android:layout_above="@id/miniPlayer"/>
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_gravity="bottom">
 
-        <!-- Mini Player at Bottom -->
-        <include
-            android:id="@+id/miniPlayer"
-            layout="@layout/view_mini_player"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_alignParentBottom="true"
-            android:visibility="gone"/>
-    </RelativeLayout>
+            <!-- Put song title, play/pause button etc. here -->
+            <FrameLayout
+                android:id="@+id/fragmentContainer"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- MiniPlayer ở cuối màn -->
+            <include
+                layout="@layout/view_mini_player"
+                android:id="@+id/miniPlayer"/>
+        </LinearLayout>
+
+    </LinearLayout>
 
     <!-- Navigation Drawer -->
     <com.google.android.material.navigation.NavigationView

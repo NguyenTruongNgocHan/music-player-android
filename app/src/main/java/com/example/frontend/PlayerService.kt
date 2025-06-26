@@ -26,12 +26,18 @@ class PlayerService : MediaSessionService() {
     companion object {
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "music_playback_channel"
+
+        var sharedPlayer: ExoPlayer? = null
     }
 
     override fun onCreate() {
         super.onCreate()
-        player = ExoPlayer.Builder(this).build()
-        mediaSession = MediaSession.Builder(this, player)
+
+        if (sharedPlayer == null) {
+            sharedPlayer = ExoPlayer.Builder(this).build()
+        }
+
+        mediaSession = MediaSession.Builder(this, sharedPlayer!!)
             .setId("PlayerServiceSession")
             .build()
     }
@@ -39,6 +45,18 @@ class PlayerService : MediaSessionService() {
     @OptIn(UnstableApi::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+
+        // 🛡️ Only initialize once
+        if (!::player.isInitialized) {
+            player = ExoPlayer.Builder(this).build()
+        }
+
+        if (!::mediaSession.isInitialized) {
+            mediaSession = MediaSession.Builder(this, player)
+                .setId("PlayerServiceSession")
+                .build()
+        }
+
         intent?.action?.let { action ->
             when (action) {
                 "PLAY" -> player.play()
@@ -46,25 +64,19 @@ class PlayerService : MediaSessionService() {
                 "SET_TRACK" -> {
                     val track = intent.getSerializableExtra("track") as? Track
                     val position = intent.getLongExtra("position", 0L)
-                    track?.let {
-                        currentTrack = it
-                        // Use the actual stream URL from the intent
-                        val streamUrl = intent.getStringExtra("streamUrl")
-                        if (!streamUrl.isNullOrEmpty()) {
-                            player.setMediaItem(MediaItem.fromUri(streamUrl))
-                            player.prepare()
-                            player.seekTo(position)
-                            player.play()
-                        }
+                    val streamUrl = intent.getStringExtra("streamUrl")
+
+                    if (track != null && !streamUrl.isNullOrEmpty()) {
+                        currentTrack = track
+                        player.setMediaItem(MediaItem.fromUri(streamUrl))
+                        player.prepare()
+                        player.seekTo(position)
+                        player.play()
                     }
-                }
-                else -> {
-                    Log.w("PlayerService", "Unknown action: $action")
                 }
             }
         }
 
-        // Create notification if not already in foreground
         if (!isServiceInForeground) {
             startForeground(NOTIFICATION_ID, createNotification())
             isServiceInForeground = true
