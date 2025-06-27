@@ -27,8 +27,7 @@
                 android:layout_height="48dp"
                 android:background="@drawable/search_view_background"
                 android:queryHint="Tìm bài hát, nghệ sĩ..."
-                android:iconifiedByDefault="false"
-                />
+                android:iconifiedByDefault="false"/>
 
             <ImageButton
                 android:id="@+id/btnAvatar"
@@ -38,8 +37,7 @@
                 android:src="@drawable/default_avt"
                 android:background="@android:color/transparent"
                 android:scaleType="centerCrop"
-                android:contentDescription="Avatar"
-                />
+                android:contentDescription="Avatar"/>
         </LinearLayout>
 
         <!-- Các nội dung khác -->
@@ -54,17 +52,17 @@
             android:layout_gravity="bottom">
 
             <!-- Put song title, play/pause button etc. here -->
-            <TextView
-                android:id="@+id/miniPlayerText"
+            <FrameLayout
+                android:id="@+id/fragmentContainer"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="Swipe up to view queue 🎵"/>
-        </LinearLayout>
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
-        <!-- MiniPlayer ở cuối màn -->
-        <include
-            layout="@layout/view_mini_player"
-            android:id="@+id/miniPlayer"/>
+            <!-- MiniPlayer ở cuối màn -->
+            <include
+                layout="@layout/view_mini_player"
+                android:id="@+id/miniPlayer"/>
+        </LinearLayout>
 
     </LinearLayout>
 

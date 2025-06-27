@@ -60,7 +60,9 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Create local player for UI control
-        exoPlayer = ExoPlayer.Builder(this).build()
+        exoPlayer = PlayerService.sharedPlayer ?: ExoPlayer.Builder(this).build().also {
+            PlayerService.sharedPlayer = it
+        }
 
         val receivedQueue = intent.getSerializableExtra("queue") as? ArrayList<Track>
         val selectedTrackId = intent.getStringExtra("track_id")
@@ -162,6 +164,7 @@ class PlayerActivity : AppCompatActivity() {
                     youTubeService.getAudioStreamUrl(this@PlayerActivity, currentTrack.id)
 
                 if (streamUrl != null) {
+                    exoPlayer.stop() // stop any previous song
                     exoPlayer.clearMediaItems()
                     val mediaItem = MediaItem.fromUri(streamUrl)
                     exoPlayer.setMediaItem(mediaItem)
@@ -278,8 +281,9 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        MiniPlayerManager.setTrack(songList[currentTrackIndex])
         super.onDestroy()
-        exoPlayer.release()
+        //exoPlayer.release()
         handler.removeCallbacks(updateSeekBarRunnable)
         coroutineScope.cancel()
     }

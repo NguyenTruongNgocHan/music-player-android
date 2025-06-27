@@ -19,11 +19,20 @@ class QueueViewModel(private val repository: YouTubeService) : ViewModel() {
         loadInitialQueue()
     }
 
-    private fun loadInitialQueue() {
+    /*private fun loadInitialQueue() {
         viewModelScope.launch {
             _isLoading.value = true
             val popularSongs = repository.searchSongs("Popular songs")
             _queue.value = popularSongs.take(10) // Initialize with 5 popular songs
+            _isLoading.value = false
+        }
+    }*/
+
+    fun loadInitialQueue(query: String = "Popular songs") {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val results = repository.searchSongs(query)
+            _queue.value = results.take(10)
             _isLoading.value = false
         }
     }
