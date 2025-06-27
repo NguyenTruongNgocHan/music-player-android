@@ -37,7 +37,10 @@
                 android:src="@drawable/default_avt"
                 android:background="@android:color/transparent"
                 android:scaleType="centerCrop"
-                android:contentDescription="Avatar"/>
+                android:clickable="true"
+                android:focusable="true"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                android:contentDescription="Avatar" />
         </LinearLayout>
 
         <!-- Các nội dung khác -->

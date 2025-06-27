@@ -1,5 +1,11 @@
 package com.example.frontend
 
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.DocumentSnapshot
+
+
+
 import android.content.Intent
 import android.os.Bundle
 import android.view.GestureDetector
@@ -37,6 +43,8 @@ class MainActivity : AppCompatActivity() {
         // Bind views
         drawerLayout = binding.drawerLayout
         avatarButton = binding.btnAvatar
+        loadUserAvatar()
+
         navigationView = binding.navView
         miniPlayerView = binding.miniPlayer.root as ConstraintLayout
 
@@ -167,4 +175,42 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Hủy", null)
             .show()
     }
+
+    private fun loadUserAvatar() {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = Firebase.firestore
+        val userDoc = db.collection("users").document(email)
+
+        userDoc.get().addOnSuccessListener { document ->
+            val avatarUrl = document.getString("avatarUrl")
+            val username = document.getString("name") ?: "User"
+
+            // Load vào avatar nhỏ bên cạnh SearchView
+            if (!avatarUrl.isNullOrEmpty()) {
+                Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.default_avt)
+                    .circleCrop()
+                    .into(avatarButton)
+            }
+
+            // ✅ Load vào nav_header (sidebar)
+            val headerView = navigationView.getHeaderView(0)
+            val avatarInSidebar = headerView.findViewById<ImageView>(R.id.avatarInSidebar)
+            val usernameInSidebar = headerView.findViewById<TextView>(R.id.usernameInSidebar)
+
+            Glide.with(this)
+                .load(avatarUrl)
+                .placeholder(R.drawable.default_avt)
+                .circleCrop()
+                .into(avatarInSidebar)
+
+            usernameInSidebar.text = username
+
+        }.addOnFailureListener {
+            // fallback nếu cần
+        }
+    }
+
+
 }
