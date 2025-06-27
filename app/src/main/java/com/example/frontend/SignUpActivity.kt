@@ -210,9 +210,11 @@ class SignUpActivity : AppCompatActivity() {
                             }
                             "success" -> {
                                 val db = Firebase.firestore
+                                val now = System.currentTimeMillis()
                                 val userData = hashMapOf(
                                     "email" to email,
-                                    "createdAt" to System.currentTimeMillis(),
+                                    "createdAt" to now,
+                                    "lastLogin" to now,
                                     "username" to "",
                                     "name" to "",
                                     "phone" to "",
@@ -227,6 +229,8 @@ class SignUpActivity : AppCompatActivity() {
                                 db.collection("users").document(email).set(userData)
                                     .addOnSuccessListener {
                                         val intent = Intent(this@SignUpActivity, UserInfoActivity::class.java)
+                                        intent.putExtra("fromRegister", true)
+
                                         intent.putExtra("email", email)
                                         startActivity(intent)
                                         finish()

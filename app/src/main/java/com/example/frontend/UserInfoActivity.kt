@@ -36,6 +36,9 @@ class UserInfoActivity : AppCompatActivity() {
     private lateinit var email: String
     private lateinit var avatar: ImageView
 
+    private lateinit var originalUserInfo: Map<String, String>
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.userinfo)
@@ -228,24 +231,71 @@ class UserInfoActivity : AppCompatActivity() {
             getInputValue(getFieldId(it)).isBlank()
         }
 
-        if (missing.isNotEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle("Thông báo")
-                .setMessage("Bạn chưa nhập đủ thông tin bắt buộc.\nBạn muốn tiếp tục nhập hay thoát?")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Đăng xuất") { _, _ -> finishAffinity() }
-                .show()
-        } else {
-            AlertDialog.Builder(this)
-                .setTitle("Xác nhận")
-                .setMessage("Bạn đã nhập đầy đủ thông tin. Bạn muốn lưu lại trước khi thoát?")
-                .setNegativeButton("Đăng xuất") { _, _ -> finishAffinity() }
-                .setPositiveButton("Lưu thông tin") { _, _ ->
-                    findViewById<Button>(R.id.btnSave).performClick()
-                }
-                .show()
+        val isChanged = isUserInfoChanged()
+
+        when {
+            missing.isNotEmpty() -> {
+                AlertDialog.Builder(this)
+                    .setTitle("Thông báo")
+                    .setMessage("Bạn chưa nhập đủ thông tin bắt buộc.\nBạn muốn tiếp tục nhập hay quay lại?")
+                    .setNegativeButton("Tiếp tục", null)
+                    .setPositiveButton("Quay lại") { _, _ ->
+                        // Trường hợp từ MainActivity → finish()
+                        // Trường hợp sau đăng ký → về LoginActivity hoặc finish()
+                        navigateBack()
+                    }
+                    .show()
+            }
+
+            isChanged -> {
+                AlertDialog.Builder(this)
+                    .setTitle("Xác nhận")
+                    .setMessage("Bạn đã chỉnh sửa thông tin. Bạn muốn lưu lại trước khi quay lại?")
+                    .setNegativeButton("Quay lại") { _, _ -> navigateBack() }
+                    .setPositiveButton("Lưu") { _, _ ->
+                        findViewById<Button>(R.id.btnSave).performClick()
+                    }
+                    .show()
+            }
+
+            else -> {
+                navigateBack()
+            }
         }
     }
+
+    private fun navigateBack() {
+        val isFromRegister = intent.getBooleanExtra("fromRegister", false)
+        if (isFromRegister) {
+            // Nếu là từ SignUpActivity → về lại Login (yêu cầu đăng nhập lại)
+            startActivity(Intent(this, LoginActivity::class.java))
+        } else {
+            // Nếu là từ MainActivity → chỉ cần finish
+            finish()
+        }
+    }
+
+    private fun isUserInfoChanged(): Boolean {
+        // Lấy các trường hiện tại
+        val currentData = mapOf(
+            "username" to getInputValue(R.id.usernameField),
+            "name"     to getInputValue(R.id.nameField),
+            "phone"    to getInputValue(R.id.phoneField),
+            "gender"   to getInputValue(R.id.genderField),
+            "birth"    to getInputValue(R.id.birthField),
+            "intro"    to getInputValue(R.id.introField)
+        )
+
+        // So sánh với dữ liệu đã load từ Firestore
+        val db = FirebaseFirestore.getInstance()
+        var changed = false
+
+        // ⚠️ NOTE: Hàm này async không thể dùng trực tiếp, bạn nên tạo biến `originalUserInfo` lúc load xong, rồi so sánh.
+        // Giải pháp đơn giản hơn là lưu lại snapshot gốc như sau:
+
+        return currentData != originalUserInfo // originalUserInfo là HashMap bạn lưu lại khi load
+    }
+
 
     private fun saveUserInfo() {
         val username = getInputValue(R.id.usernameField)
@@ -316,23 +366,34 @@ class UserInfoActivity : AppCompatActivity() {
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
                     setInputValue(R.id.usernameField, document.getString("username") ?: "")
-                    setInputValue(R.id.nameField, document.getString("name") ?: "")
-                    setInputValue(R.id.phoneField, document.getString("phone") ?: "")
-                    setInputValue(R.id.genderField, document.getString("gender") ?: "")
-                    setInputValue(R.id.birthField, document.getString("birth") ?: "")
-                    setInputValue(R.id.introField, document.getString("intro") ?: "")
+                    setInputValue(R.id.nameField,     document.getString("name") ?: "")
+                    setInputValue(R.id.phoneField,    document.getString("phone") ?: "")
+                    setInputValue(R.id.genderField,   document.getString("gender") ?: "")
+                    setInputValue(R.id.birthField,    document.getString("birth") ?: "")
+                    setInputValue(R.id.introField,    document.getString("intro") ?: "")
+
                     val avatarUrl = document.getString("avatarUrl")
                     if (!avatarUrl.isNullOrEmpty()) {
-                        Glide.with(this).load(avatarUrl).into(avatar) // dùng Glide để load ảnh từ URL
-                    }
-                    else {
+                        Glide.with(this).load(avatarUrl).into(avatar)
+                    } else {
                         avatar.setImageResource(R.drawable.default_avt)
                     }
+
+                    // ✅ Đặt trong đây mới access được biến `document`
+                    originalUserInfo = mapOf(
+                        "username" to (document.getString("username") ?: ""),
+                        "name"     to (document.getString("name") ?: ""),
+                        "phone"    to (document.getString("phone") ?: ""),
+                        "gender"   to (document.getString("gender") ?: ""),
+                        "birth"    to (document.getString("birth") ?: ""),
+                        "intro"    to (document.getString("intro") ?: "")
+                    )
                 }
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Lỗi tải thông tin", Toast.LENGTH_SHORT).show()
             }
+
     }
 
 }

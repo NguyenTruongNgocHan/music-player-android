@@ -17,13 +17,14 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnGuest: Button
     private lateinit var btnForgotPassword: Button
 
-    private lateinit var auth: FirebaseAuth
+    private val auth = FirebaseAuth.getInstance()
+    private val db = Firebase.firestore
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.login)
 
-        auth = FirebaseAuth.getInstance()
 
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
@@ -37,11 +38,13 @@ class LoginActivity : AppCompatActivity() {
             val password = passwordInput.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {
-                toast("Vui lòng nhập đầy đủ email và mật khẩu")
-            } else {
-                loginWithFirebase(email, password)
+                toast("Nhập email và mật khẩu")
+                return@setOnClickListener
             }
+
+            loginWithFirebase(email, password)
         }
+
 
         btnSignUp.setOnClickListener {
             startActivity(Intent(this, SignUpActivity::class.java))
@@ -62,13 +65,24 @@ class LoginActivity : AppCompatActivity() {
     private fun loginWithFirebase(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-                toast("Đăng nhập thành công")
-                checkUserInfo(email)
+                // ✅ Update thời gian đăng nhập
+                val now = System.currentTimeMillis()
+                db.collection("users").document(email)
+                    .update("lastLogin", now)
+                    .addOnSuccessListener {
+                        // ✅ Sau khi update xong → kiểm tra thông tin để điều hướng
+                        checkUserInfo(email)
+                    }
+                    .addOnFailureListener {
+                        toast("Không cập nhật được thời gian đăng nhập")
+                    }
             }
             .addOnFailureListener {
-                toast("Đăng nhập thất bại: ${it.message}")
+                toast("Sai email hoặc mật khẩu")
             }
     }
+
+
 
 
     private fun checkUserInfo(email: String) {
