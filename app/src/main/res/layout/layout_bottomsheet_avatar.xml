@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/option_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:text="Chọn từ thư viện"
+        android:drawableLeft="@drawable/ic_gallery"
+        android:drawablePadding="8dp" />
+
+    <TextView
+        android:id="@+id/option_camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:text="Chụp ảnh"
+        android:drawableLeft="@drawable/ic_camera"
+        android:drawablePadding="8dp" />
+
+
+    <TextView
+        android:id="@+id/option_remove"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:text="Xóa"
+        android:textColor="@android:color/holo_red_dark"
+        android:drawableLeft="@drawable/ic_delete"
+        android:drawablePadding="8dp" />
+
+</LinearLayout>

@@ -63,10 +63,41 @@ class LoginActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 toast("Đăng nhập thành công")
-                loadUserInfo(email)
+                checkUserInfo(email)
             }
             .addOnFailureListener {
                 toast("Đăng nhập thất bại: ${it.message}")
+            }
+    }
+
+
+    private fun checkUserInfo(email: String) {
+        val db = Firebase.firestore
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val username = doc.getString("username") ?: ""
+                    val name = doc.getString("name") ?: ""
+                    val phone = doc.getString("phone") ?: ""
+
+                    val hasAllInfo = username.isNotBlank() && name.isNotBlank() && phone.isNotBlank()
+
+                    val next = if (hasAllInfo) {
+                        Intent(this, MainActivity::class.java)
+                    } else {
+                        Intent(this, UserInfoActivity::class.java).apply {
+                            putExtra("email", email)
+                        }
+                    }
+
+                    startActivity(next)
+                    finish()
+                } else {
+                    toast("Không tìm thấy thông tin người dùng")
+                }
+            }
+            .addOnFailureListener {
+                toast("Lỗi khi lấy thông tin người dùng")
             }
     }
 
