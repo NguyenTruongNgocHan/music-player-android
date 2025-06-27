@@ -8,6 +8,18 @@
     android:background="@drawable/loading_bg"
     android:padding="0dp">
 
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topAppBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:navigationIcon="@drawable/ic_back_arrow"
+        app:titleCentered="true"
+        app:titleTextColor="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 
     <!-- ScrollView chứa nội dung -->
@@ -29,65 +41,67 @@
             android:padding="16dp">
 
             <!-- Avatar -->
-            <ImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/avatarInSidebar"
                 android:layout_width="110dp"
                 android:layout_height="110dp"
                 android:layout_marginTop="0dp"
-                android:background="@drawable/circle_background"
-                android:clickable="true"
-                android:elevation="4dp"
-                android:focusable="true"
                 android:scaleType="centerCrop"
-                android:src="@drawable/default_avt" />
+                android:src="@drawable/default_avt"
+                android:backgroundTint="@color/white"
+                android:clickable="true"
+                android:focusable="true"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                android:layout_gravity="center"
+                />
 
-            <!-- Ô Email -->
-            <androidx.cardview.widget.CardView
+
+            <!-- Email (readonly) -->
+            <include layout="@layout/item_input_readonly"/>
+
+            <!-- Username (required) -->
+            <FrameLayout android:id="@+id/usernameField"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
+                android:layout_height="wrap_content">
+                <include layout="@layout/item_input_required" />
+            </FrameLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
+            <!-- Họ tên (required) -->
+            <FrameLayout android:id="@+id/nameField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <include layout="@layout/item_input_required" />
+            </FrameLayout>
 
-                    <!-- Label -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Email"
-                        android:textColor="#A8A8A8"
-                        android:textSize="13sp" />
 
-                    <!-- Trường nhập email -->
-                    <EditText
-                        android:id="@+id/emailInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@null"
-                        android:enabled="false"
-                        android:hint="Nhập email"
-                        android:inputType="textEmailAddress"
-                        android:paddingTop="4dp"
-                        android:textColor="@android:color/black"
-                        android:textColorHint="#A8A8A8"
-                        android:textSize="16sp" /> <!-- nếu chỉ hiển thị, không cho sửa -->
 
-                    <!-- Đường gạch underline động -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="2dp"
-                        android:layout_gravity="start"
-                        android:background="#A8A8A8"
-                        android:scaleX="0" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            <!-- Giới tính (optional) -->
+            <FrameLayout android:id="@+id/genderField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <include layout="@layout/item_input_optional" />
+            </FrameLayout>
 
+            <!-- Ngày sinh (optional) -->
+            <FrameLayout android:id="@+id/birthField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <include layout="@layout/item_input_optional" />
+            </FrameLayout>
+
+            <!-- Số điện thoại (required) -->
+            <FrameLayout android:id="@+id/phoneField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <include layout="@layout/item_input_required" />
+            </FrameLayout>
+
+            <!-- Giới thiệu bản thân (optional) -->
+            <FrameLayout android:id="@+id/introField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <include layout="@layout/item_input_optional" />
+            </FrameLayout>
 
         </LinearLayout>
     </ScrollView>
