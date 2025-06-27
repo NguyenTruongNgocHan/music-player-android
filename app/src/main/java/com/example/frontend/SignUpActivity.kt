@@ -14,6 +14,8 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -207,11 +209,33 @@ class SignUpActivity : AppCompatActivity() {
                                     .show()
                             }
                             "success" -> {
-                                val intent = Intent(this@SignUpActivity, UserInfoActivity::class.java)
-                                intent.putExtra("email", email)
-                                startActivity(intent)
-                                finish()
+                                val db = Firebase.firestore
+                                val userData = hashMapOf(
+                                    "email" to email,
+                                    "createdAt" to System.currentTimeMillis(),
+                                    "username" to "",
+                                    "name" to "",
+                                    "phone" to "",
+                                    "gender" to "",
+                                    "birth" to "",
+                                    "intro" to "",
+                                    "avatarUrl" to null,
+                                    "role" to "user",
+                                    "uid" to json.optString("uid")
+                                )
+
+                                db.collection("users").document(email).set(userData)
+                                    .addOnSuccessListener {
+                                        val intent = Intent(this@SignUpActivity, UserInfoActivity::class.java)
+                                        intent.putExtra("email", email)
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    .addOnFailureListener {
+                                        toast("Không thể lưu thông tin người dùng: ${it.message}")
+                                    }
                             }
+
                             else -> toast("Đăng ký thất bại: ${json.optString("message")}")
                         }
                     } catch (e: Exception) {

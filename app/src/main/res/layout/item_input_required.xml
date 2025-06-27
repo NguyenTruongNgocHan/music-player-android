@@ -9,11 +9,16 @@
     app:cardElevation="0dp">
 
     <LinearLayout
+        android:id="@+id/clickableField"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground">
 
+        <!-- Label màu đỏ cho field bắt buộc -->
         <TextView
             android:id="@+id/label"
             android:layout_width="wrap_content"
@@ -22,17 +27,17 @@
             android:textColor="#FF0000"
             android:textSize="13sp" />
 
-        <EditText
-            android:id="@+id/inputField"
+        <!-- Nội dung hiển thị -->
+        <TextView
+            android:id="@+id/displayValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@null"
-            android:hint="..."
-            android:paddingTop="4dp"
+            android:text=""
             android:textColor="@android:color/black"
-            android:textColorHint="#A8A8A8"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:paddingTop="4dp" />
 
+        <!-- Gạch dưới -->
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"

@@ -1,5 +1,9 @@
 package com.example.frontend
 
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+
+
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -7,13 +11,20 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
+import com.google.android.gms.common.internal.safeparcel.SafeParcelReader.getFieldId
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.storage.FirebaseStorage
 
 class UserInfoActivity : AppCompatActivity() {
 
@@ -34,6 +45,7 @@ class UserInfoActivity : AppCompatActivity() {
         email = intent.getStringExtra("email") ?: ""
         emailInput.setText(email)
         emailInput.isEnabled = false
+        loadUserInfo()
 
         // Avatar
         avatar = findViewById(R.id.avatarInSidebar)
@@ -54,6 +66,36 @@ class UserInfoActivity : AppCompatActivity() {
         setupEditableField(R.id.genderField, "Giới tính", "gender")
         setupEditableField(R.id.birthField, "Ngày sinh", "birth")
         setupEditableField(R.id.introField, "Giới thiệu bản thân", "intro")
+
+
+        val topAppBar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.topAppBar)
+        topAppBar.setNavigationOnClickListener {
+            handleBackPressed()
+        }
+
+        findViewById<Button>(R.id.btnSave).setOnClickListener {
+            val requiredFields = listOf("username", "name", "phone")
+            val missing = requiredFields.filter {
+                getInputValue(getFieldId(it)).isBlank()
+            }
+
+            if (missing.isNotEmpty()) {
+                Toast.makeText(this, "Vui lòng điền đầy đủ thông tin bắt buộc", Toast.LENGTH_SHORT).show()
+            } else {
+                saveUserInfo()
+            }
+        }
+
+
+    }
+
+    private fun getFieldId(key: String): Int {
+        return when (key) {
+            "username" -> R.id.usernameField
+            "name" -> R.id.nameField
+            "phone" -> R.id.phoneField
+            else -> View.NO_ID
+        }
     }
 
     private fun showAvatarOptions() {
@@ -123,8 +165,9 @@ class UserInfoActivity : AppCompatActivity() {
 
     private fun setupEditableField(fieldId: Int, title: String, fieldKey: String) {
         val fieldLayout = findViewById<FrameLayout>(fieldId)
-        fieldLayout.setOnClickListener {
-            val currentValue = getInputValue(fieldId)
+        val inputView = fieldLayout.findViewById<TextView>(R.id.displayValue)
+        inputView?.setOnClickListener {
+            val currentValue = inputView.text.toString()
             val intent = Intent(this, EditFieldActivity::class.java).apply {
                 putExtra("title", title)
                 putExtra("fieldKey", fieldKey)
@@ -132,6 +175,7 @@ class UserInfoActivity : AppCompatActivity() {
             }
             startActivityForResult(intent, REQUEST_EDIT_FIELD)
         }
+
     }
 
     private fun setLabel(fieldId: Int, labelText: String) {
@@ -142,13 +186,153 @@ class UserInfoActivity : AppCompatActivity() {
 
     private fun getInputValue(fieldId: Int): String {
         val view = findViewById<View>(fieldId)
-        val input = view.findViewById<EditText>(R.id.inputField)
+        val input = view.findViewById<TextView>(R.id.displayValue)
+
+        if (input == null) {
+            val fieldKey = when (fieldId) {
+                R.id.usernameField -> "username"
+                R.id.nameField     -> "name"
+                R.id.phoneField    -> "phone"
+                else               -> return ""
+            }
+            val title = when (fieldKey) {
+                "username" -> "Tên người dùng"
+                "name"     -> "Tên"
+                "phone"    -> "Số điện thoại"
+                else       -> "Chỉnh sửa"
+            }
+
+            val intent = Intent(this, EditFieldActivity::class.java).apply {
+                putExtra("title", title)
+                putExtra("fieldKey", fieldKey)
+                putExtra("value", "")
+            }
+            startActivityForResult(intent, REQUEST_EDIT_FIELD)
+
+            return "" // Trả về rỗng để không crash
+        }
+
         return input.text.toString()
     }
 
+
     private fun setInputValue(fieldId: Int, value: String) {
         val view = findViewById<View>(fieldId)
-        val input = view.findViewById<EditText>(R.id.inputField)
-        input.setText(value)
+        val input = view.findViewById<TextView>(R.id.displayValue)
+        input.text = value
     }
+
+    private fun handleBackPressed() {
+        val requiredFields = listOf("username", "name", "phone")
+        val missing = requiredFields.filter {
+            getInputValue(getFieldId(it)).isBlank()
+        }
+
+        if (missing.isNotEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Thông báo")
+                .setMessage("Bạn chưa nhập đủ thông tin bắt buộc.\nBạn muốn tiếp tục nhập hay thoát?")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Đăng xuất") { _, _ -> finishAffinity() }
+                .show()
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle("Xác nhận")
+                .setMessage("Bạn đã nhập đầy đủ thông tin. Bạn muốn lưu lại trước khi thoát?")
+                .setNegativeButton("Đăng xuất") { _, _ -> finishAffinity() }
+                .setPositiveButton("Lưu thông tin") { _, _ ->
+                    findViewById<Button>(R.id.btnSave).performClick()
+                }
+                .show()
+        }
+    }
+
+    private fun saveUserInfo() {
+        val username = getInputValue(R.id.usernameField)
+        val name = getInputValue(R.id.nameField)
+        val phone = getInputValue(R.id.phoneField)
+        val gender = getInputValue(R.id.genderField)
+        val birth = getInputValue(R.id.birthField)
+        val intro = getInputValue(R.id.introField)
+
+        val userMap = hashMapOf<String, Any>(
+            "username" to username,
+            "name" to name,
+            "phone" to phone,
+            "gender" to gender,
+            "birth" to birth,
+            "intro" to intro,
+            "updatedAt" to System.currentTimeMillis()
+        )
+
+        if (selectedImageUri != null) {
+            val storageRef = FirebaseStorage.getInstance().reference
+                .child("avatars/${email}.jpg")
+
+            storageRef.putFile(selectedImageUri!!)
+                .continueWithTask { task ->
+                    if (!task.isSuccessful) throw task.exception!!
+                    storageRef.downloadUrl
+                }.addOnSuccessListener { uri ->
+                    userMap["avatarUrl"] = uri.toString()
+                    saveToFirestore(userMap)
+                }.addOnFailureListener {
+                    Toast.makeText(this, "Lỗi upload ảnh", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            // Không có ảnh mới: vẫn lưu thông tin khác
+            saveToFirestore(userMap)
+        }
+    }
+
+
+    private fun saveToFirestore(userMap: HashMap<String, Any>) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .set(userMap, SetOptions.merge())
+            .addOnSuccessListener {
+                Toast.makeText(this, "Lưu thành công!", Toast.LENGTH_SHORT).show()
+
+                AlertDialog.Builder(this)
+                    .setTitle("Hoàn tất")
+                    .setMessage("Bạn muốn đăng nhập tiếp hay thoát ứng dụng?")
+                    .setPositiveButton("Đăng nhập") { _, _ ->
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finishAffinity()
+                    }
+                    .setNegativeButton("Thoát") { _, _ -> finishAffinity() }
+                    .show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Lỗi lưu thông tin: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun loadUserInfo() {
+        val db = FirebaseFirestore.getInstance()
+
+
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    setInputValue(R.id.usernameField, document.getString("username") ?: "")
+                    setInputValue(R.id.nameField, document.getString("name") ?: "")
+                    setInputValue(R.id.phoneField, document.getString("phone") ?: "")
+                    setInputValue(R.id.genderField, document.getString("gender") ?: "")
+                    setInputValue(R.id.birthField, document.getString("birth") ?: "")
+                    setInputValue(R.id.introField, document.getString("intro") ?: "")
+                    val avatarUrl = document.getString("avatarUrl")
+                    if (!avatarUrl.isNullOrEmpty()) {
+                        Glide.with(this).load(avatarUrl).into(avatar) // dùng Glide để load ảnh từ URL
+                    }
+                    else {
+                        avatar.setImageResource(R.drawable.default_avt)
+                    }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Lỗi tải thông tin", Toast.LENGTH_SHORT).show()
+            }
+    }
+
 }
