@@ -2,12 +2,11 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/loading_bg"
-    android:padding="0dp">
+    android:background="@drawable/loading_bg">
 
+    <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/topAppBar"
         android:layout_width="0dp"
@@ -15,16 +14,15 @@
         android:background="@android:color/transparent"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
         app:navigationIcon="@drawable/ic_back_arrow"
-        app:titleCentered="true"
+        app:title="Thông tin người dùng"
+        app:titleCentered="false"
         app:titleTextColor="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-
-    <!-- ScrollView chứa nội dung -->
+    <!-- ScrollView -->
     <ScrollView
-        android:id="@+id/scrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
@@ -45,64 +43,92 @@
                 android:id="@+id/avatarInSidebar"
                 android:layout_width="110dp"
                 android:layout_height="110dp"
-                android:layout_marginTop="0dp"
+                android:layout_marginTop="12dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/default_avt"
-                android:backgroundTint="@color/white"
-                android:clickable="true"
-                android:focusable="true"
+                app:strokeWidth="2dp"
+                app:strokeColor="@android:color/white"
                 app:shapeAppearanceOverlay="@style/CircleImage"
-                android:layout_gravity="center"
-                />
+                android:clickable="true"
+                android:focusable="true"/>
 
-
-            <!-- Email (readonly) -->
-            <include layout="@layout/item_input_readonly"/>
-
-            <!-- Username (required) -->
-            <FrameLayout android:id="@+id/usernameField"
+            <!-- Các fields -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <include layout="@layout/item_input_required" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_readonly"/>
             </FrameLayout>
 
-            <!-- Họ tên (required) -->
-            <FrameLayout android:id="@+id/nameField"
+            <FrameLayout
+                android:id="@+id/usernameField"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <include layout="@layout/item_input_required" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_required"/>
             </FrameLayout>
 
-
-
-            <!-- Giới tính (optional) -->
-            <FrameLayout android:id="@+id/genderField"
+            <FrameLayout
+                android:id="@+id/nameField"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <include layout="@layout/item_input_optional" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_required"/>
             </FrameLayout>
 
-            <!-- Ngày sinh (optional) -->
-            <FrameLayout android:id="@+id/birthField"
+            <FrameLayout
+                android:id="@+id/genderField"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <include layout="@layout/item_input_optional" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_optional"/>
             </FrameLayout>
 
-            <!-- Số điện thoại (required) -->
-            <FrameLayout android:id="@+id/phoneField"
+            <FrameLayout
+                android:id="@+id/birthField"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <include layout="@layout/item_input_required" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_optional"/>
             </FrameLayout>
 
-            <!-- Giới thiệu bản thân (optional) -->
-            <FrameLayout android:id="@+id/introField"
+            <FrameLayout
+                android:id="@+id/phoneField"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <include layout="@layout/item_input_optional" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_required"/>
             </FrameLayout>
 
+            <FrameLayout
+                android:id="@+id/introField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_field_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+                <include layout="@layout/item_input_optional"/>
+            </FrameLayout>
         </LinearLayout>
     </ScrollView>
 
@@ -117,9 +143,9 @@
         android:textColor="@android:color/black"
         android:backgroundTint="@color/white"
         app:cornerRadius="24dp"
+        android:elevation="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="12dp" />
-
+        android:layout_margin="12dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

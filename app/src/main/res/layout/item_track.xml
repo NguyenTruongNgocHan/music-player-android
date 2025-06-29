@@ -1,26 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="180dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:elevation="4dp"
-    android:radius="12dp"
+    android:layout_margin="6dp"
     android:foreground="?android:attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    app:cardCornerRadius="16dp"
+    app:cardBackgroundColor="#66FFFFFF"
+    app:cardElevation="4dp"
+    app:strokeColor="#2D0F44"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="10dp">
 
         <ImageView
             android:id="@+id/imgThumbnail"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
             android:scaleType="centerCrop"
-            android:src="@drawable/example" />
+            android:src="@drawable/example"
+            android:clipToOutline="true"
+            android:contentDescription="Thumbnail" />
 
         <TextView
             android:id="@+id/tvTitle"
@@ -31,14 +39,15 @@
             android:maxLines="2"
             android:ellipsize="end"
             android:textSize="14sp"
-            android:layout_marginTop="4dp"/>
+            android:textColor="#2D0F44"
+            android:layout_marginTop="6dp"/>
 
         <TextView
             android:id="@+id/tvArtist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Artist"
-            android:textColor="#888888"
+            android:textColor="#444444"
             android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end"/>
