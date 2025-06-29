@@ -1,11 +1,5 @@
 package com.example.frontend
 
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.firestore.DocumentSnapshot
-
-
-
 import android.content.Intent
 import android.os.Bundle
 import android.view.GestureDetector
@@ -13,17 +7,20 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.appcompat.widget.SearchView
 import com.bumptech.glide.Glide
 import com.example.frontend.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
@@ -40,25 +37,17 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Bind views
         drawerLayout = binding.drawerLayout
         avatarButton = binding.btnAvatar
-        loadUserAvatar()
-
         navigationView = binding.navView
         miniPlayerView = binding.miniPlayer.root as ConstraintLayout
 
-        // Set up sidebar toggle
+        // Sidebar toggle
         avatarButton.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        // Load initial HomeFragment
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, HomeFragment())
-            .commit()
-
-        // Sidebar actions
+        // Sidebar nav actions
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email.orEmpty()
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
@@ -76,20 +65,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Search actions
-        val searchView = binding.searchView
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        /*
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrBlank()) {
                     lastSearchQuery = query
-                    val queueFragment = QueueFragment().apply {
-                        arguments = Bundle().apply {
-                            putString("search_query", query)
-                        }
-                    }
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContainer, queueFragment)
-                        .addToBackStack(null)
-                        .commit()
+                    showQueue(query)
                 }
                 return true
             }
@@ -97,7 +78,9 @@ class MainActivity : AppCompatActivity() {
             override fun onQueryTextChange(newText: String?) = false
         })
 
-        // Swipe gesture on mini player
+         */
+
+        // Swipe gesture mini player
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             private val SWIPE_THRESHOLD = 100
             private val SWIPE_VELOCITY_THRESHOLD = 100
@@ -124,7 +107,55 @@ class MainActivity : AppCompatActivity() {
         miniPlayerView.setOnClickListener {
             showQueue()
         }
+
+        loadUserAvatar()
+        loadTracks()
+
     }
+    private fun loadTracks() {
+        val db = Firebase.firestore
+        val trackContainer = findViewById<LinearLayout>(R.id.trackContainer)
+
+        db.collection("tracks")
+            .limit(10)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val title = document.getString("title") ?: "Unknown Title"
+                    val artist = document.getString("artist") ?: "Unknown Artist"
+                    val duration = document.getString("duration") ?: "0:00"
+                    val thumbnailUrl = document.getString("thumbnailUrl")
+
+                    val trackView = layoutInflater.inflate(R.layout.item_track, trackContainer, false)
+
+                    trackView.findViewById<TextView>(R.id.tvTitle).text = title
+                    trackView.findViewById<TextView>(R.id.tvArtist).text = artist
+                    trackView.findViewById<TextView>(R.id.tvDuration).text = duration
+
+                    val imageView = trackView.findViewById<ImageView>(R.id.imgThumbnail)
+                    Glide.with(this)
+                        .load(thumbnailUrl)
+                        .placeholder(R.drawable.example)
+                        .centerCrop()
+                        .into(imageView)
+
+                    // Optional: set click để mở Queue hay PlayerActivity
+                    trackView.setOnClickListener {
+                        val intent = Intent(this, PlayerActivity::class.java)
+                        intent.putExtra("title", title)
+                        intent.putExtra("artist", artist)
+                        intent.putExtra("thumbnailUrl", thumbnailUrl)
+                        startActivity(intent)
+                    }
+
+                    trackContainer.addView(trackView)
+                }
+            }
+            .addOnFailureListener {
+                // fallback nếu cần
+            }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -135,27 +166,23 @@ class MainActivity : AppCompatActivity() {
         val track = MiniPlayerManager.getCurrentTrack()
         if (track != null) {
             miniPlayerView.visibility = View.VISIBLE
-
-            val title = miniPlayerView.findViewById<TextView>(R.id.trackTitle)
-            val artist = miniPlayerView.findViewById<TextView>(R.id.trackArtist)
-            val duration = miniPlayerView.findViewById<TextView>(R.id.trackDuration)
-            val thumbnail = miniPlayerView.findViewById<ImageView>(R.id.trackThumbnail)
-
-            title.text = track.title
-            artist.text = track.artist
-            duration.text = "3:45" // Optional: set actual duration later
-            Glide.with(this).load(track.thumbnailUrl).into(thumbnail)
+            miniPlayerView.findViewById<TextView>(R.id.trackTitle).text = track.title
+            miniPlayerView.findViewById<TextView>(R.id.trackArtist).text = track.artist
+            miniPlayerView.findViewById<TextView>(R.id.trackDuration).text = "3:45"
+            Glide.with(this).load(track.thumbnailUrl)
+                .placeholder(R.drawable.default_avt)
+                .into(miniPlayerView.findViewById(R.id.trackThumbnail))
         } else {
-            //miniPlayerView.visibility = View.GONE
+            miniPlayerView.visibility = View.GONE
         }
     }
 
-    private fun showQueue() {
+    private fun showQueue(search: String = lastSearchQuery) {
         val existing = supportFragmentManager.findFragmentByTag("QUEUE_FRAGMENT")
         if (existing == null) {
             val queueFragment = QueueFragment().apply {
                 arguments = Bundle().apply {
-                    putString("search_query", lastSearchQuery)
+                    putString("search_query", search)
                 }
             }
             queueFragment.show(supportFragmentManager, "QUEUE_FRAGMENT")
@@ -180,12 +207,9 @@ class MainActivity : AppCompatActivity() {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: return
         val db = Firebase.firestore
         val userDoc = db.collection("users").document(email)
-
         userDoc.get().addOnSuccessListener { document ->
             val avatarUrl = document.getString("avatarUrl")
             val username = document.getString("name") ?: "User"
-
-            // Load vào avatar nhỏ bên cạnh SearchView
             if (!avatarUrl.isNullOrEmpty()) {
                 Glide.with(this)
                     .load(avatarUrl)
@@ -193,24 +217,12 @@ class MainActivity : AppCompatActivity() {
                     .circleCrop()
                     .into(avatarButton)
             }
-
-            // ✅ Load vào nav_header (sidebar)
+            // Sidebar avatar + name
             val headerView = navigationView.getHeaderView(0)
-            val avatarInSidebar = headerView.findViewById<ImageView>(R.id.avatarInSidebar)
-            val usernameInSidebar = headerView.findViewById<TextView>(R.id.usernameInSidebar)
-
-            Glide.with(this)
-                .load(avatarUrl)
-                .placeholder(R.drawable.default_avt)
-                .circleCrop()
-                .into(avatarInSidebar)
-
-            usernameInSidebar.text = username
-
-        }.addOnFailureListener {
-            // fallback nếu cần
+            headerView.findViewById<ImageView>(R.id.avatarInSidebar).let {
+                Glide.with(this).load(avatarUrl).placeholder(R.drawable.default_avt).circleCrop().into(it)
+            }
+            headerView.findViewById<TextView>(R.id.usernameInSidebar).text = username
         }
     }
-
-
 }

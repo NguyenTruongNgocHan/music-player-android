@@ -290,8 +290,6 @@ class UserInfoActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
         var changed = false
 
-        // ⚠️ NOTE: Hàm này async không thể dùng trực tiếp, bạn nên tạo biến `originalUserInfo` lúc load xong, rồi so sánh.
-        // Giải pháp đơn giản hơn là lưu lại snapshot gốc như sau:
 
         return currentData != originalUserInfo // originalUserInfo là HashMap bạn lưu lại khi load
     }
@@ -341,18 +339,24 @@ class UserInfoActivity : AppCompatActivity() {
         db.collection("users").document(email)
             .set(userMap, SetOptions.merge())
             .addOnSuccessListener {
-                Toast.makeText(this, "Lưu thành công!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()
 
-                AlertDialog.Builder(this)
-                    .setTitle("Hoàn tất")
-                    .setMessage("Bạn muốn đăng nhập tiếp hay thoát ứng dụng?")
-                    .setPositiveButton("Đăng nhập") { _, _ ->
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finishAffinity()
-                    }
-                    .setNegativeButton("Thoát") { _, _ -> finishAffinity() }
-                    .show()
+                val isFromRegister = intent.getBooleanExtra("fromRegister", false)
+                if (isFromRegister) {
+                    AlertDialog.Builder(this)
+                        .setTitle("Hoàn tất")
+                        .setMessage("Bạn muốn đăng nhập tiếp hay thoát ứng dụng?")
+                        .setPositiveButton("Đăng nhập") { _, _ ->
+                            startActivity(Intent(this, MainActivity::class.java))
+                            finishAffinity()
+                        }
+                        .setNegativeButton("Thoát") { _, _ -> finishAffinity() }
+                        .show()
+                } else {
+                    finish()
+                }
             }
+
             .addOnFailureListener {
                 Toast.makeText(this, "Lỗi lưu thông tin: ${it.message}", Toast.LENGTH_SHORT).show()
             }
@@ -379,7 +383,6 @@ class UserInfoActivity : AppCompatActivity() {
                         avatar.setImageResource(R.drawable.default_avt)
                     }
 
-                    // ✅ Đặt trong đây mới access được biến `document`
                     originalUserInfo = mapOf(
                         "username" to (document.getString("username") ?: ""),
                         "name"     to (document.getString("name") ?: ""),

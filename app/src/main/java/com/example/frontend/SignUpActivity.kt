@@ -9,13 +9,13 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -71,14 +71,12 @@ class SignUpActivity : AppCompatActivity() {
             val password = passwordInput.text.toString()
             val confirmPassword = confirmPasswordInput.text.toString()
 
-            if (!isOtpVerified) {
-                toast("Xác minh OTP trước đã!")
-                return@setOnClickListener
+            when {
+                !isOtpVerified -> toast("Xác minh OTP trước đã!")
+                password != confirmPassword -> toast("Mật khẩu không khớp!")
+                password.length < 6 -> toast("Mật khẩu phải ít nhất 6 ký tự")
+                else -> signUp(email, password)
             }
-
-            if (password != confirmPassword) toast("Mật khẩu không khớp!")
-            else if (password.length < 6) toast("Mật khẩu phải ít nhất 6 ký tự")
-            else signUp(email, password)
         }
 
         findViewById<Button>(R.id.btnBack).setOnClickListener {
@@ -88,8 +86,7 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun sendOTP(email: String) {
-        val json = JSONObject().apply { put("email", email) }
-
+        val json = JSONObject().put("email", email)
         val request = Request.Builder()
             .url("$baseUrl/sendOtpEmail")
             .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
@@ -126,11 +123,9 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun verifyOTP(email: String, otp: String) {
-        val json = JSONObject().apply {
-            put("email", email)
-            put("otp", otp)
-        }
-
+        val json = JSONObject()
+            .put("email", email)
+            .put("otp", otp)
         val request = Request.Builder()
             .url("$baseUrl/verifyOtp")
             .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
@@ -146,10 +141,9 @@ class SignUpActivity : AppCompatActivity() {
                 runOnUiThread {
                     try {
                         if (!response.isSuccessful) {
-                            toast("Lỗi từ server: ${response.code}")
+                            toast("Lỗi server: ${response.code}")
                             return@runOnUiThread
                         }
-
                         val json = JSONObject(body)
                         when (json.getString("status")) {
                             "verified" -> {
@@ -162,7 +156,7 @@ class SignUpActivity : AppCompatActivity() {
                             else -> toast("Phản hồi không hợp lệ!")
                         }
                     } catch (e: Exception) {
-                        toast("Lỗi xử lý JSON: ${e.message}")
+                        toast("Lỗi JSON: ${e.message}")
                         Log.e("VERIFY_OTP_ERROR", e.message ?: "Unknown")
                     }
                 }
@@ -171,10 +165,9 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun signUp(email: String, password: String) {
-        val json = JSONObject().apply {
-            put("email", email)
-            put("password", password)
-        }
+        val json = JSONObject()
+            .put("email", email)
+            .put("password", password)
 
         val request = Request.Builder()
             .url("$baseUrl/registerUser")
@@ -191,7 +184,7 @@ class SignUpActivity : AppCompatActivity() {
                 runOnUiThread {
                     try {
                         if (!response.isSuccessful) {
-                            toast("Lỗi server: ${response.code}")
+                            toast("Server lỗi: ${response.code}")
                             return@runOnUiThread
                         }
 
@@ -209,7 +202,6 @@ class SignUpActivity : AppCompatActivity() {
                                     .show()
                             }
                             "success" -> {
-                                val db = Firebase.firestore
                                 val now = System.currentTimeMillis()
                                 val userData = hashMapOf(
                                     "email" to email,
@@ -223,27 +215,27 @@ class SignUpActivity : AppCompatActivity() {
                                     "intro" to "",
                                     "avatarUrl" to null,
                                     "role" to "user",
-                                    "uid" to json.optString("uid")
+                                    "uid" to json.optString("uid"),
+                                    "usernameChangeLog" to listOf<Long>(),
+                                    "nameChangeLog" to listOf<Long>()
                                 )
-
-                                db.collection("users").document(email).set(userData)
+                                Firebase.firestore.collection("users").document(email)
+                                    .set(userData)
                                     .addOnSuccessListener {
                                         val intent = Intent(this@SignUpActivity, UserInfoActivity::class.java)
                                         intent.putExtra("fromRegister", true)
-
                                         intent.putExtra("email", email)
                                         startActivity(intent)
                                         finish()
                                     }
                                     .addOnFailureListener {
-                                        toast("Không thể lưu thông tin người dùng: ${it.message}")
+                                        toast("Không lưu được user: ${it.message}")
                                     }
                             }
-
                             else -> toast("Đăng ký thất bại: ${json.optString("message")}")
                         }
                     } catch (e: Exception) {
-                        toast("Lỗi xử lý phản hồi: ${e.message}")
+                        toast("Lỗi xử lý: ${e.message}")
                     }
                 }
             }
@@ -266,7 +258,6 @@ class SignUpActivity : AppCompatActivity() {
                         codeInputs[i + 1].requestFocus()
                     }
                 }
-
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun afterTextChanged(s: Editable?) {}
             })
