@@ -369,4 +369,12 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <include
+        android:id="@+id/miniPlayer"
+        layout="@layout/view_mini_player"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:visibility="gone"/>
 </FrameLayout>

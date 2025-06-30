@@ -1,17 +1,20 @@
 package com.example.frontend
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.frontend.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
 
 class HomeFragmentActivity : Fragment() {
 
@@ -42,18 +45,26 @@ class HomeFragmentActivity : Fragment() {
         return inflater.inflate(R.layout.home_fragment, container, false)
     }
 
+    private lateinit var youtubeService: YouTubeService
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         greetingText = view.findViewById(R.id.greetingText)
         subGreeting = view.findViewById(R.id.subGreeting)
         avatarButton = view.findViewById(R.id.btnAvatar)
         trackContainer = view.findViewById(R.id.trackContainer)
 
+        youtubeService = YouTubeService(requireContext())
+
         avatarButton.setOnClickListener {
             drawerCallback?.invoke()
         }
 
         loadUserInfo()
+        loadYouTubePopularTracks()
         loadTracks()
+
+        val miniPlayerView = view.findViewById<View>(R.id.miniPlayer)
+        MiniPlayerController.bind(miniPlayerView)
     }
 
     private fun loadUserInfo() {
@@ -75,6 +86,38 @@ class HomeFragmentActivity : Fragment() {
                         .into(avatarButton)
                 }
             }
+    }
+
+    private fun loadYouTubePopularTracks() {
+        lifecycleScope.launch {
+            val tracks = youtubeService.searchSongs("Popular songs")
+            trackContainer.removeAllViews() // Optional: clear existing items
+
+            for (track in tracks) {
+                val itemView = layoutInflater.inflate(R.layout.item_track, trackContainer, false)
+                itemView.findViewById<TextView>(R.id.tvTitle).text = track.title
+                itemView.findViewById<TextView>(R.id.tvArtist).text = track.artist
+
+                val img = itemView.findViewById<ImageView>(R.id.imgThumbnail)
+                Glide.with(this@HomeFragmentActivity)
+                    .load(track.thumbnailUrl)
+                    .placeholder(R.drawable.example)
+                    .centerCrop()
+                    .into(img)
+
+                itemView.setOnClickListener {
+                    MiniPlayerController.show(track)
+
+                    val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                        putExtra("track_id", track.id)
+                        putExtra("queue", ArrayList(tracks))
+                    }
+                    startActivity(intent)
+                }
+
+                trackContainer.addView(itemView)
+            }
+        }
     }
 
     private fun loadTracks() {
