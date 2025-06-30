@@ -3,8 +3,10 @@ package com.example.frontend
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -92,9 +94,23 @@ class EditFieldActivity : AppCompatActivity() {
             "gender" -> {
                 showOnly(binding.spinnerGender)
                 val options = listOf("Nam", "Nữ", "Khác")
-                val adapter = ArrayAdapter(this, R.layout.spinner_gender, options)
-                adapter.setDropDownViewResource(R.layout.spinner_gender)
+                val adapter = object : ArrayAdapter<String>(this, R.layout.spinner_gender, options) {
+                    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                        val view = super.getView(position, convertView, parent)
+                        // Set padding, background, text style cho line đóng
+                        view.setBackgroundResource(R.drawable.bg_edit_clickable)
+                        return view
+                    }
+
+                    override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                        val view = super.getDropDownView(position, convertView, parent)
+                        // Không bo góc / shadow xấu
+                        view.setBackgroundColor(Color.TRANSPARENT)
+                        return view
+                    }
+                }
                 binding.spinnerGender.adapter = adapter
+
                 val index = options.indexOfFirst { it.equals(value, ignoreCase = true) }
                 if (index != -1) binding.spinnerGender.setSelection(index)
             }
@@ -155,7 +171,10 @@ class EditFieldActivity : AppCompatActivity() {
 
     private fun showOnly(visibleView: View) {
         binding.editTextLayout.visibility = if (visibleView == binding.editTextLayout) View.VISIBLE else View.GONE
-        binding.spinnerGender.visibility = if (visibleView == binding.spinnerGender) View.VISIBLE else View.GONE
+        binding.spinnerGender.parent?.let { parent ->
+            (parent as View).visibility =
+                if (visibleView == binding.spinnerGender) View.VISIBLE else View.GONE
+        }
         binding.datePickerField.visibility = if (visibleView == binding.datePickerField) View.VISIBLE else View.GONE
     }
 
