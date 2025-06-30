@@ -72,6 +72,17 @@ class PlayerActivity : AppCompatActivity() {
             currentTrackIndex = songList.indexOfFirst { it.id == selectedTrackId }.takeIf { it != -1 } ?: 0
 
             setupUI()
+            binding.btnSwitchToVideo.setOnClickListener {
+                val currentTrack = songList[currentTrackIndex]
+                val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+                    putExtra("videoId", currentTrack.id)
+                    putExtra("title", currentTrack.title)
+                    putExtra("artist", currentTrack.artist)
+                    putExtra("thumbnail", currentTrack.thumbnailUrl)
+                    putExtra("position", exoPlayer.currentPosition)
+                }
+                startActivity(intent)
+            }
             playCurrentTrack()
         }
     }
