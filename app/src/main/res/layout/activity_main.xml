@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/loading_bg">
 
-    <!-- Nội dung chính -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Lottie background -->
+        <!-- Lottie background (nếu muốn load effect đằng sau fragment) -->
         <com.airbnb.lottie.LottieAnimationView
             android:id="@+id/lottieBackground"
             android:layout_width="match_parent"
@@ -26,208 +23,17 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <!-- Scroll content: avatar + playlists + radio -->
-        <ScrollView
+        <!-- Fragment container -->
+        <FrameLayout
+            android:id="@+id/fragmentContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/miniPlayer"
+            app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:paddingBottom="80dp">
+            app:layout_constraintEnd_toEndOf="parent"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <!-- Header: Avatar + Tabs -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-
-                    android:elevation="4dp"
-                    android:padding="12dp"
-
-                    android:background="@drawable/header_background"
-
-                    android:paddingBottom="0dp">
-
-                    <!-- Text greeting bên trái -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/greetingText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-
-                            android:text="Hello, Hanna 👋"
-                            android:textColor="#FFFFFF"
-                            android:textSize="18sp"
-                            android:textStyle="bold"/>
-
-                        <TextView
-                            android:id="@+id/subGreeting"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Hope you enjoy the music 🎧"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"/>
-                    </LinearLayout>
-
-                    <!-- Avatar bên phải -->
-                    <ImageButton
-                        android:id="@+id/btnAvatar"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/default_avt"
-                        android:background="@drawable/circle_background"
-                        android:scaleType="centerCrop"
-                        android:contentDescription="Avatar" />
-                </LinearLayout>
-
-
-                <!-- Grid playlists -->
-                <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Bài hát nổi bật"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"/>
-
-                <HorizontalScrollView
-
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fillViewport="true">
-
-                    <LinearLayout
-                        android:id="@+id/trackContainer"
-
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <!-- Item track card nhỏ -->
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="140dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="12dp"
-                            android:foreground="?android:attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            app:cardCornerRadius="16dp"
-                            app:cardBackgroundColor="#66FFFFFF"
-                            app:cardElevation="4dp"
-                            app:strokeColor="#2D0F44"
-                            app:strokeWidth="1dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="8dp">
-
-                                <ImageView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="100dp"
-                                    android:adjustViewBounds="true"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/example"
-                                    android:clipToOutline="true"
-                                    android:contentDescription="Thumbnail" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="Song Title"
-                                    android:textStyle="bold"
-                                    android:maxLines="2"
-                                    android:ellipsize="end"
-                                    android:textSize="13sp"
-                                    android:textColor="#2D0F44"
-                                    android:layout_marginTop="4dp"/>
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="Artist"
-                                    android:textColor="#444444"
-                                    android:textSize="11sp"
-                                    android:maxLines="1"
-                                    android:ellipsize="end"/>
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="0:00"
-                                    android:gravity="end"
-                                    android:textSize="11sp"
-                                    android:textColor="#555555"
-                                    android:layout_marginTop="2dp"/>
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Copy thêm nhiều track nhỏ -->
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-
-                <!-- Popular radio -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Radio phổ biến"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    android:layout_marginTop="24dp"
-                    android:layout_marginBottom="8dp"/>
-
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fillViewport="true">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="120dp"
-                            android:layout_height="120dp"
-                            app:cardCornerRadius="60dp"
-                            app:cardBackgroundColor="#66FFFFFF"
-                            app:cardElevation="0dp"
-                            android:layout_marginEnd="12dp"
-                            android:foreground="?attr/selectableItemBackground">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:text="Hà Anh Tuấn"
-                                android:textColor="#2D0F44"
-                                android:textSize="14sp"/>
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Thêm radio khác -->
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-            </LinearLayout>
-        </ScrollView>
-
-        <!-- Mini Player -->
+        <!-- Mini player (nếu có) -->
         <include
             layout="@layout/view_mini_player"
             android:id="@+id/miniPlayer"
@@ -249,7 +55,7 @@
             app:menu="@menu/bottom_nav_menu"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Navigation Drawer -->
@@ -262,5 +68,5 @@
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/nav_menu"
         app:itemTextColor="@color/sidebar_item_color"
-        app:itemIconTint="@color/sidebar_item_color"/>
+        app:itemIconTint="@color/sidebar_item_color" />
 </androidx.drawerlayout.widget.DrawerLayout>
