@@ -1,28 +1,33 @@
 package com.example.frontend.ui.search
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.frontend.PlayerActivity
 import com.example.frontend.R
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
+import com.example.frontend.Track
+import com.example.frontend.YouTubeService
+import com.example.frontend.databinding.ItemSearchResultBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SearchFragmentActivity : Fragment() {
-
     private lateinit var searchView: SearchView
     private lateinit var resultContainer: LinearLayout
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        return inflater.inflate(R.layout.search_fragment, container, false)
-    }
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View = inflater.inflate(R.layout.search_fragment, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         searchView = view.findViewById(R.id.searchView)
@@ -30,60 +35,39 @@ class SearchFragmentActivity : Fragment() {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                if (!query.isNullOrBlank()) {
-                    searchTracks(query.trim())
-                }
+                if (!query.isNullOrBlank()) searchTracks(query.trim())
                 return true
             }
-
             override fun onQueryTextChange(newText: String?) = false
         })
     }
 
     private fun searchTracks(query: String) {
         resultContainer.removeAllViews()
-        val db = Firebase.firestore
+        CoroutineScope(Dispatchers.Main).launch {
+            val tracks = YouTubeService(requireContext()).searchSongs(query)
+            if (tracks.isEmpty()) {
+                val tv = TextView(requireContext()).apply { text = "Không tìm thấy kết quả." }
+                resultContainer.addView(tv)
+            } else {
+                for (track in tracks) {
+                    val binding = ItemSearchResultBinding.inflate(layoutInflater, resultContainer, false)
+                    binding.tvTitle.text = track.title
+                    binding.tvArtist.text = track.artist
+                    Glide.with(this@SearchFragmentActivity)
+                        .load(track.thumbnailUrl)
+                        .into(binding.imgThumbnail)
 
-        // Sử dụng whereEqualTo, nếu muốn flexible hơn có thể dùng whereArrayContains hoặc custom index
-        db.collection("tracks")
-            .whereEqualTo("title", query)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    val tv = TextView(requireContext()).apply {
-                        text = "Không tìm thấy kết quả."
-                        setTextColor(resources.getColor(android.R.color.white))
-                        textSize = 16f
-                        setPadding(12, 12, 12, 12)
-                    }
-                    resultContainer.addView(tv)
-                } else {
-                    for (doc in documents) {
-                        val title = doc.getString("title") ?: "Unknown Title"
-                        val artist = doc.getString("artist") ?: "Unknown Artist"
-                        val thumbnailUrl = doc.getString("thumbnailUrl")
-
-                        val cardView = layoutInflater.inflate(R.layout.item_search_result, resultContainer, false)
-                        cardView.findViewById<TextView>(R.id.tvTitle).text = title
-                        cardView.findViewById<TextView>(R.id.tvArtist).text = artist
-
-                        val imgThumb = cardView.findViewById<ImageView>(R.id.imgThumbnail)
-                        Glide.with(this)
-                            .load(thumbnailUrl)
-                            .placeholder(R.drawable.example)
-                            .centerCrop()
-                            .into(imgThumb)
-
-                        cardView.setOnClickListener {
-                            Toast.makeText(requireContext(), "Play: $title", Toast.LENGTH_SHORT).show()
+                    binding.root.setOnClickListener {
+                        val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                            putExtra("queue", ArrayList(tracks))
+                            putExtra("track_id", track.id)
                         }
-
-                        resultContainer.addView(cardView)
+                        startActivity(intent)
                     }
+                    resultContainer.addView(binding.root)
                 }
             }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Lỗi khi tìm kiếm", Toast.LENGTH_SHORT).show()
-            }
+        }
     }
 }

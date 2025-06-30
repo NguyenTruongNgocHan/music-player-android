@@ -22,6 +22,7 @@ import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.view.View
 import android.app.AlertDialog
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.widget.ImageButton
@@ -36,10 +37,32 @@ class VideoPlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
 
+        val trackId = intent.getStringExtra("trackId") ?: return
+        val startPosition = intent.getLongExtra("position", 0L)
+
         playerView = findViewById(R.id.playerView)
         val videoId = intent.getStringExtra("videoId") ?: return
         findViewById<ImageButton>(R.id.btnSettings).setOnClickListener {
             showSettingsDialog()
+        }
+
+        findViewById<ImageButton>(R.id.btnSwitchToMusic).setOnClickListener {
+            val trackId = intent.getStringExtra("trackId")
+            val title = intent.getStringExtra("title")
+            val artist = intent.getStringExtra("artist")
+            val thumbnail = intent.getStringExtra("thumbnail")
+            val position = exoPlayer?.currentPosition ?: 0L
+
+            val intent = Intent(this, PlayerActivity::class.java).apply {
+                putExtra("track_id", trackId)
+                putExtra("position", position)
+                putExtra("title", title)
+                putExtra("artist", artist)
+                putExtra("thumbnail", thumbnail)
+                // Optional: pass full queue if needed
+            }
+            startActivity(intent)
+            finish()
         }
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -59,7 +82,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                 val videoUrl = json.getString("videoUrl")
 
                 launch(Dispatchers.Main) {
-                    playVideo(videoUrl)
+                    playVideo(videoUrl, startPosition)
                 }
             } catch (e: Exception) {
                 Log.e("VideoFetch", "Error fetching video", e)
@@ -67,12 +90,16 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun playVideo(url: String) {
+    private fun playVideo(url: String, startPosition: Long = 0L) {
         exoPlayer = ExoPlayer.Builder(this).build()
         playerView.player = exoPlayer
+
         val mediaItem = MediaItem.fromUri(Uri.parse(url))
         exoPlayer?.setMediaItem(mediaItem)
         exoPlayer?.prepare()
+
+        // Seek to passed position before playing
+        exoPlayer?.seekTo(startPosition)
         exoPlayer?.play()
     }
 
