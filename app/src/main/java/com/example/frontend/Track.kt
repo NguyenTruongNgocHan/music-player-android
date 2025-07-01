@@ -9,7 +9,9 @@ data class Track(
     val duration: String,
     val thumbnailUrl: String,
     var isPlaying: Boolean = false,
-    var isLiked: Boolean = false
+    var isLiked: Boolean = false,
+    val viewCount: Long = 0
+
 ) : Serializable {
     companion object {
         // For loading states

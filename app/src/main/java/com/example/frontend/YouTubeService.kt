@@ -67,20 +67,24 @@ class YouTubeService(private val context: Context) {
 
             val videoIds = searchResponse.items.mapNotNull { it.id?.videoId }
 
-            val videoDetails = youtube.videos().list("snippet,contentDetails").apply {
-                id = videoIds.joinToString(",")
+
+            val videoDetails = youtube.videos().list("snippet,contentDetails,statistics").apply {
+            id = videoIds.joinToString(",")
                 key = context.getString(R.string.youtube_api_key)
             }.execute()
 
             videoDetails.items.map { video ->
+                val viewCount = video.statistics?.viewCount?.toLong() ?: 0L
                 Track(
                     id = video.id,
                     title = video.snippet.title ?: "Unknown",
                     artist = video.snippet.channelTitle ?: "Unknown",
                     duration = parseDuration(video.contentDetails.duration),
-                    thumbnailUrl = video.snippet.thumbnails?.default?.url ?: ""
+                    thumbnailUrl = video.snippet.thumbnails?.default?.url ?: "",
+                    viewCount = viewCount
                 )
             }
+
         } catch (e: Exception) {
             Log.e(TAG, "Error during search: ${e.message}", e)
             emptyList()

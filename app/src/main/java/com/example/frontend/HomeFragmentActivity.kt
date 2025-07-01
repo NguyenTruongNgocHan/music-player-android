@@ -22,6 +22,10 @@ class HomeFragmentActivity : Fragment() {
     private lateinit var subGreeting: TextView
     private lateinit var avatarButton: ImageButton
     private lateinit var trackContainer: LinearLayout
+    private lateinit var trackContainerRanking: LinearLayout
+    private var queueTopSong: List<Track> = emptyList()
+
+
 
     var drawerCallback: (() -> Unit)? = null
 
@@ -52,6 +56,7 @@ class HomeFragmentActivity : Fragment() {
         subGreeting = view.findViewById(R.id.subGreeting)
         avatarButton = view.findViewById(R.id.btnAvatar)
         trackContainer = view.findViewById(R.id.trackContainer)
+        trackContainerRanking = view.findViewById(R.id.trackContainerRanking)
 
         youtubeService = YouTubeService(requireContext())
 
@@ -62,6 +67,7 @@ class HomeFragmentActivity : Fragment() {
         loadUserInfo()
         loadYouTubePopularTracks()
         loadTracks()
+        loadTopTrendingTracks()
 
         val miniPlayerView = view.findViewById<View>(R.id.miniPlayer)
         MiniPlayerController.bind(miniPlayerView)
@@ -119,6 +125,55 @@ class HomeFragmentActivity : Fragment() {
             }
         }
     }
+
+    private fun loadTopTrendingTracks() {
+        lifecycleScope.launch {
+            val trendingTracks = youtubeService.searchSongs("top trending music vietnam")
+            val topTracks = trendingTracks.sortedByDescending { it.viewCount }.take(5)
+            queueTopSong = topTracks
+
+            trackContainerRanking.removeAllViews()
+            var rank = 1
+
+            for (track in topTracks) {
+                val itemView = layoutInflater.inflate(R.layout.item_top_song, trackContainerRanking, false)
+
+                val tvRank = itemView.findViewById<TextView>(R.id.tvRank)
+                val imgThumbnail = itemView.findViewById<ImageView>(R.id.imgTopThumbnail)
+                val tvTitle = itemView.findViewById<TextView>(R.id.tvTopTitle)
+                val tvArtist = itemView.findViewById<TextView>(R.id.tvTopArtist)
+
+                val medal = when(rank) {
+                    1 -> "🥇"
+                    2 -> "🥈"
+                    3 -> "🥉"
+                    else -> "⭐"
+                }
+                tvRank.text = medal
+                tvTitle.text = track.title
+                tvArtist.text = "${track.artist} • ${track.viewCount} views"
+
+                Glide.with(this@HomeFragmentActivity)
+                    .load(track.thumbnailUrl)
+                    .placeholder(R.drawable.example)
+                    .centerCrop()
+                    .into(imgThumbnail)
+
+                itemView.setOnClickListener {
+                    MiniPlayerController.show(track)
+                    val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                        putExtra("track_id", track.id)
+                        putExtra("queue", ArrayList(queueTopSong))
+                    }
+                    startActivity(intent)
+                }
+
+                trackContainerRanking.addView(itemView)
+                rank++
+            }
+        }
+    }
+
 
     private fun loadTracks() {
         val db = Firebase.firestore

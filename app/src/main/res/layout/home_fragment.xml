@@ -82,7 +82,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🔥 Playlist nổi bật"
+                android:text="🔥 Bài hát phổ biến"
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 android:layout_marginTop="24dp"
@@ -198,58 +198,25 @@
                 </LinearLayout>
             </HorizontalScrollView>
 
+
             <!-- Bảng xếp hạng -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Bảng xếp hạng"
+                android:text="🚀 Bảng xếp hạng"
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"/>
 
-            <HorizontalScrollView
+            <LinearLayout
+                android:id="@+id/trackContainerRanking"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fillViewport="true">
+                android:orientation="vertical"
+                android:paddingTop="8dp"/>
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
 
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="160dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="12dp"
-                        app:cardCornerRadius="16dp"
-                        app:cardBackgroundColor="#88FFFFFF"
-                        app:cardElevation="6dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="8dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="🥇 Top 1"
-                                android:textSize="18sp"
-                                android:textColor="#2D0F44"
-                                android:textStyle="bold"/>
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Bài hát hay nhất"
-                                android:textSize="14sp"
-                                android:textColor="#2D0F44"/>
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-                </LinearLayout>
-            </HorizontalScrollView>
 
             <!-- Nhạc hành trình dài -->
             <TextView
