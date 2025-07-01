@@ -52,6 +52,7 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -78,6 +79,7 @@ class PlayerActivity : AppCompatActivity() {
 
             setupUI()
             binding.btnSwitchToVideo.setOnClickListener {
+                exoPlayer.pause()
                 val currentTrack = songList[currentTrackIndex]
                 val intent = Intent(this, VideoPlayerActivity::class.java).apply {
                     putExtra("videoUrl", cachedVideoUrl)
@@ -150,6 +152,7 @@ class PlayerActivity : AppCompatActivity() {
 
         binding.repeatButton.setOnClickListener {
             isRepeat = !isRepeat
+            exoPlayer.repeatMode = if (isRepeat) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
             updateRepeatButton()
         }
 
@@ -176,14 +179,7 @@ class PlayerActivity : AppCompatActivity() {
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
-                    Player.STATE_ENDED -> {
-                        if (isRepeat) {
-                            exoPlayer.seekTo(0)
-                            exoPlayer.play()
-                        } else {
-                            playNextTrack()
-                        }
-                    }
+                    Player.STATE_ENDED -> playNextTrack()
                     Player.STATE_READY -> {
                         binding.totalTime.text = formatTime(exoPlayer.duration)
                         MiniPlayerController.updatePlayState()
@@ -198,6 +194,7 @@ class PlayerActivity : AppCompatActivity() {
         val currentTrack = songList[currentTrackIndex]
         updateTrack(currentTrack)
         preloadVideoUrl(currentTrack)
+        exoPlayer.repeatMode = if (isRepeat) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
 
         coroutineScope.launch {
             try {
@@ -206,7 +203,7 @@ class PlayerActivity : AppCompatActivity() {
                     youTubeService.getAudioStreamUrl(this@PlayerActivity, currentTrack.id)
 
                 if (streamUrl != null) {
-                   // exoPlayer.stop() // stop any previous song
+                    // exoPlayer.stop() // stop any previous song
                     exoPlayer.clearMediaItems()
                     val mediaItem = MediaItem.fromUri(streamUrl)
                     exoPlayer.setMediaItem(mediaItem)

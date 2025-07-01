@@ -19,21 +19,27 @@
             android:id="@+id/searchView"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="48dp"
+            android:layout_height="40dp"
             android:background="@drawable/search_view_background"
             android:queryHint="Tìm bài hát..."
             android:iconifiedByDefault="false" />
 
         <ImageButton
             android:id="@+id/btnGuestAvatar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_marginStart="12dp"
             android:src="@drawable/default_avt"
             android:background="@android:color/transparent"
             android:scaleType="centerCrop"
             android:contentDescription="Guest Avatar"/>
     </LinearLayout>
+
+    <!-- Divider (optional) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#DDDDDD"/>
 
     <!-- Nội dung chính -->
     <FrameLayout
@@ -42,9 +48,11 @@
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
-    <!-- Mini Player -->
-    <include
-        layout="@layout/view_mini_player"
+    <!-- Mini Player (ẩn mặc định) -->
+    <FrameLayout
         android:id="@+id/miniPlayer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:visibility="gone"/>
+
 </LinearLayout>

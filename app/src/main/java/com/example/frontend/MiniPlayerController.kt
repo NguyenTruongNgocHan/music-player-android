@@ -51,7 +51,6 @@ object MiniPlayerController {
         miniPlayerView?.apply {
             findViewById<TextView>(R.id.trackTitle).text = track.title
             findViewById<TextView>(R.id.trackArtist).text = track.artist
-            findViewById<TextView>(R.id.trackDuration).text = track.duration
 
             val img = findViewById<ImageView>(R.id.trackThumbnail)
             Glide.with(context)
