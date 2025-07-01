@@ -126,4 +126,26 @@ class YouTubeService(private val context: Context) {
         }
         return "0:00"
     }
+
+    suspend fun getVideoStreamUrl(context: Context, videoId: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("https://musicextractor-production.up.railway.app/extract-video")
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+
+            val jsonBody = """{"videoId": "$videoId"}"""
+            conn.outputStream.use { it.write(jsonBody.toByteArray()) }
+
+            val response = conn.inputStream.bufferedReader().use { it.readText() }
+            val json = JSONObject(response)
+            return@withContext json.optString("videoUrl", null)
+
+        } catch (e: Exception) {
+            Log.e("VideoFetch", "Failed to get video URL", e)
+            return@withContext null
+        }
+    }
 }

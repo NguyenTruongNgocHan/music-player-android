@@ -1,137 +1,102 @@
 package com.example.frontend
 
-import android.net.Uri
-import android.os.Bundle
-import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
-import android.app.PictureInPictureParams
-import android.os.Build
-import android.util.Rational
-import android.app.PendingIntent
-import android.app.RemoteAction
-import android.content.res.Configuration
-import android.graphics.drawable.Icon
-import android.view.View
 import android.app.AlertDialog
+import android.app.PictureInPictureParams
 import android.content.Intent
+import android.content.res.Configuration
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.util.Rational
 import android.widget.ImageButton
-
+import android.widget.Toast
+import android.widget.VideoView
+import androidx.appcompat.app.AppCompatActivity
+import android.widget.MediaController
 
 class VideoPlayerActivity : AppCompatActivity() {
 
-    private lateinit var playerView: PlayerView
-    private var exoPlayer: ExoPlayer? = null
+    private lateinit var videoView: VideoView
+    private var startPosition: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
 
-        val trackId = intent.getStringExtra("trackId") ?: return
-        val startPosition = intent.getLongExtra("position", 0L)
+        val trackId = intent.getStringExtra("trackId")
+        val title = intent.getStringExtra("title")
+        val artist = intent.getStringExtra("artist")
+        val thumbnail = intent.getStringExtra("thumbnail")
+        val videoUrl = intent.getStringExtra("videoUrl")
+        startPosition = intent.getLongExtra("position", 0L)
 
-        playerView = findViewById(R.id.playerView)
-        val videoId = intent.getStringExtra("videoId") ?: return
-        findViewById<ImageButton>(R.id.btnSettings).setOnClickListener {
-            showSettingsDialog()
-        }
+        videoView = findViewById(R.id.videoView)
+        val mediaController = MediaController(this)
+        mediaController.setAnchorView(videoView)
+        videoView.setMediaController(mediaController)
 
         findViewById<ImageButton>(R.id.btnSwitchToMusic).setOnClickListener {
-            val trackId = intent.getStringExtra("trackId")
-            val title = intent.getStringExtra("title")
-            val artist = intent.getStringExtra("artist")
-            val thumbnail = intent.getStringExtra("thumbnail")
-            val position = exoPlayer?.currentPosition ?: 0L
-
             val intent = Intent(this, PlayerActivity::class.java).apply {
                 putExtra("track_id", trackId)
-                putExtra("position", position)
+                putExtra("position", videoView.currentPosition.toLong())
                 putExtra("title", title)
                 putExtra("artist", artist)
                 putExtra("thumbnail", thumbnail)
-                // Optional: pass full queue if needed
             }
             startActivity(intent)
             finish()
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL("https://your-flask-domain.com/extract-video")
-                val conn = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    doOutput = true
-                    setRequestProperty("Content-Type", "application/json")
-                }
+        findViewById<ImageButton>(R.id.btnSettings).setOnClickListener {
+            showSettingsDialog()
+        }
 
-                val jsonBody = """{"videoId": "$videoId"}"""
-                conn.outputStream.use { it.write(jsonBody.toByteArray()) }
-
-                val response = conn.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(response)
-                val videoUrl = json.getString("videoUrl")
-
-                launch(Dispatchers.Main) {
-                    playVideo(videoUrl, startPosition)
-                }
-            } catch (e: Exception) {
-                Log.e("VideoFetch", "Error fetching video", e)
-            }
+        if (!videoUrl.isNullOrEmpty()) {
+            Log.d("VideoFetch", "Playing video from $videoUrl")
+            playVideo(Uri.parse(videoUrl))
+        } else {
+            Log.e("VideoFetch", "No video URL provided")
+            Toast.makeText(this, "No video URL", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun playVideo(url: String, startPosition: Long = 0L) {
-        exoPlayer = ExoPlayer.Builder(this).build()
-        playerView.player = exoPlayer
+    private fun playVideo(uri: Uri) {
+        videoView.setVideoURI(uri)
+        videoView.setOnPreparedListener { mp ->
+            videoView.seekTo(startPosition.toInt())
+            videoView.start()
+        }
 
-        val mediaItem = MediaItem.fromUri(Uri.parse(url))
-        exoPlayer?.setMediaItem(mediaItem)
-        exoPlayer?.prepare()
-
-        // Seek to passed position before playing
-        exoPlayer?.seekTo(startPosition)
-        exoPlayer?.play()
+        videoView.setOnErrorListener { _, what, extra ->
+            Log.e("VideoPlayer", "Error: $what $extra")
+            Toast.makeText(this, "Playback error", Toast.LENGTH_SHORT).show()
+            true
+        }
     }
 
     private fun showSettingsDialog() {
-        val options = arrayOf("Loop Playback", "Playback Speed", "Sleep Timer")
+        val options = arrayOf("Loop Playback", "Sleep Timer") // speed not supported by VideoView
         AlertDialog.Builder(this)
             .setTitle("Playback Settings")
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> toggleLooping()
-                    1 -> showSpeedDialog()
-                    2 -> showSleepTimerDialog()
+                    1 -> showSleepTimerDialog()
                 }
             }
             .show()
     }
 
+    private var isLooping = false
     private fun toggleLooping() {
-        exoPlayer?.repeatMode = if (exoPlayer?.repeatMode == ExoPlayer.REPEAT_MODE_ONE)
-            ExoPlayer.REPEAT_MODE_OFF else ExoPlayer.REPEAT_MODE_ONE
-    }
-
-    private fun showSpeedDialog() {
-        val speeds = arrayOf("0.5x", "1x", "1.5x", "2x")
-        val speedValues = floatArrayOf(0.5f, 1f, 1.5f, 2f)
-
-        AlertDialog.Builder(this)
-            .setTitle("Playback Speed")
-            .setItems(speeds) { _, index ->
-                exoPlayer?.setPlaybackSpeed(speedValues[index])
-            }
-            .show()
+        isLooping = !isLooping
+        videoView.setOnCompletionListener {
+            if (isLooping) videoView.start()
+        }
+        Toast.makeText(this, "Looping: ${if (isLooping) "ON" else "OFF"}", Toast.LENGTH_SHORT).show()
     }
 
     private fun showSleepTimerDialog() {
@@ -144,8 +109,14 @@ class VideoPlayerActivity : AppCompatActivity() {
                 val delay = minutes[index] * 60 * 1000L
                 if (delay > 0) {
                     Handler(Looper.getMainLooper()).postDelayed({
-                        exoPlayer?.pause()
-                    }, delay)
+                        if (!videoView.isPlaying) {
+                            AlertDialog.Builder(this)
+                                .setTitle("Playback Timeout")
+                                .setMessage("Video didn't play. Try again.")
+                                .setPositiveButton("OK", null)
+                                .show()
+                        }
+                    }, 5000)
                 }
             }
             .show()
@@ -158,7 +129,7 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     private fun enterPictureInPictureModeIfSupported() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val aspectRatio = Rational(playerView.width, playerView.height)
+            val aspectRatio = Rational(videoView.width, videoView.height)
             val pipBuilder = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
 
@@ -171,18 +142,13 @@ class VideoPlayerActivity : AppCompatActivity() {
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-
-        if (isInPictureInPictureMode) {
-            // Hide controls in PiP
-            playerView.useController = false
-        } else {
-            // Show controls again when back to full screen
-            playerView.useController = true
-        }
+        videoView.setMediaController(if (isInPictureInPictureMode) null else MediaController(this).apply {
+            setAnchorView(videoView)
+        })
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        exoPlayer?.release()
+        videoView.stopPlayback()
     }
 }

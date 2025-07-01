@@ -6,9 +6,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -67,6 +70,8 @@ class PlayerActivity : AppCompatActivity() {
         val receivedQueue = intent.getSerializableExtra("queue") as? ArrayList<Track>
         val selectedTrackId = intent.getStringExtra("track_id")
 
+        val positionFromVideo = intent.getLongExtra("position", 0L)
+
         if (!receivedQueue.isNullOrEmpty()) {
             songList = receivedQueue
             currentTrackIndex = songList.indexOfFirst { it.id == selectedTrackId }.takeIf { it != -1 } ?: 0
@@ -75,15 +80,28 @@ class PlayerActivity : AppCompatActivity() {
             binding.btnSwitchToVideo.setOnClickListener {
                 val currentTrack = songList[currentTrackIndex]
                 val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+                    putExtra("videoUrl", cachedVideoUrl)
                     putExtra("videoId", currentTrack.id)
                     putExtra("title", currentTrack.title)
                     putExtra("artist", currentTrack.artist)
                     putExtra("thumbnail", currentTrack.thumbnailUrl)
                     putExtra("position", exoPlayer.currentPosition)
                 }
+                Log.d("LaunchVideo", "Launching with URL = $cachedVideoUrl")
                 startActivity(intent)
             }
-            playCurrentTrack()
+            playCurrentTrack(positionFromVideo)
+        }
+    }
+
+    private var cachedVideoUrl: String? = null
+
+    @UnstableApi
+    private fun preloadVideoUrl(track: Track) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val service = YouTubeService(this@PlayerActivity)
+            cachedVideoUrl = service.getVideoStreamUrl(this@PlayerActivity, track.id)
+            Log.d("PreloadVideo", "Video URL: $cachedVideoUrl")
         }
     }
 
@@ -164,9 +182,11 @@ class PlayerActivity : AppCompatActivity() {
         })
     }
 
-    private fun playCurrentTrack() {
+    @OptIn(UnstableApi::class)
+    private fun playCurrentTrack(startPosition: Long = 0L) {
         val currentTrack = songList[currentTrackIndex]
         updateTrack(currentTrack)
+        preloadVideoUrl(currentTrack)
 
         coroutineScope.launch {
             try {
@@ -175,11 +195,12 @@ class PlayerActivity : AppCompatActivity() {
                     youTubeService.getAudioStreamUrl(this@PlayerActivity, currentTrack.id)
 
                 if (streamUrl != null) {
-                    exoPlayer.stop() // stop any previous song
+                   // exoPlayer.stop() // stop any previous song
                     exoPlayer.clearMediaItems()
                     val mediaItem = MediaItem.fromUri(streamUrl)
                     exoPlayer.setMediaItem(mediaItem)
                     exoPlayer.prepare()
+                    exoPlayer.seekTo(startPosition)
                     exoPlayer.play()
                     isPlaying = true
                     updatePlayButtonIcon()
