@@ -1,65 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
+    android:layout_margin="0dp"
     android:foreground="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="16dp"
-    app:cardBackgroundColor="#66FFFFFF"
-    app:cardElevation="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="#CCFFFFFF"
     app:strokeColor="#2D0F44"
-    app:strokeWidth="1dp">
+    app:strokeWidth="1dp"
+    app:cardUseCompatPadding="true">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+<LinearLayout
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:orientation="vertical"
+android:padding="10dp">
+
+<!-- Thumbnail -->
+<ImageView
+    android:id="@+id/imgThumbnail"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:scaleType="centerCrop"
+    android:clipToOutline="true"
+    android:background="@drawable/rounded_background"
+    android:contentDescription="Thumbnail"
+    android:src="@drawable/example" />
+
+<!-- Title -->
+<TextView
+    android:id="@+id/tvTitle"
+    android:layout_width="80dp"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="2dp"
+    android:text="Top hits"
+    android:textStyle="bold"
+    android:textColor="#2D0F44"
+    android:textSize="12sp"
+    android:maxLines="1"
+    android:ellipsize="end" />
+
+<!-- Row: Artist + Duration -->
+<LinearLayout
+    android:layout_width="80dp"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginTop="1dp">
+
+    <TextView
+        android:id="@+id/tvArtist"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:layout_weight="1"
+        android:text="Artist"
+        android:textColor="#444444"
+        android:textSize="10sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-        <ImageView
-            android:id="@+id/imgThumbnail"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:adjustViewBounds="true"
-            android:scaleType="centerCrop"
-            android:src="@drawable/example"
-            android:clipToOutline="true"
-            android:contentDescription="Thumbnail" />
+    <TextView
+        android:id="@+id/tvDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0:00"
+        android:textColor="#555555"
+        android:textSize="10sp" />
+</LinearLayout>
 
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Song Title"
-            android:textStyle="bold"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:textSize="14sp"
-            android:textColor="#2D0F44"
-            android:layout_marginTop="6dp"/>
-
-        <TextView
-            android:id="@+id/tvArtist"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Artist"
-            android:textColor="#444444"
-            android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end"/>
-
-        <TextView
-            android:id="@+id/tvDuration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="0:00"
-            android:gravity="end"
-            android:textSize="12sp"
-            android:textColor="#555555"
-            android:layout_marginTop="2dp"/>
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+</LinearLayout>
+    </androidx.cardview.widget.CardView>

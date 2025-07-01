@@ -203,7 +203,7 @@ class PlayerActivity : AppCompatActivity() {
                     youTubeService.getAudioStreamUrl(this@PlayerActivity, currentTrack.id)
 
                 if (streamUrl != null) {
-                   // exoPlayer.stop() // stop any previous song
+                    // exoPlayer.stop() // stop any previous song
                     exoPlayer.clearMediaItems()
                     val mediaItem = MediaItem.fromUri(streamUrl)
                     exoPlayer.setMediaItem(mediaItem)

@@ -19,15 +19,18 @@
             android:id="@+id/searchView"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="48dp"
+            android:layout_height="40dp"
             android:background="@drawable/search_view_background"
             android:queryHint="Tìm bài hát..."
-            android:iconifiedByDefault="false" />
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:submitBackground="@android:color/transparent" />
+
 
         <ImageButton
             android:id="@+id/btnGuestAvatar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_marginStart="12dp"
             android:src="@drawable/default_avt"
             android:background="@android:color/transparent"
@@ -35,16 +38,23 @@
             android:contentDescription="Guest Avatar"/>
     </LinearLayout>
 
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#DDDDDD"/>
+
     <!-- Nội dung chính -->
     <FrameLayout
         android:id="@+id/guestMainContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1" />
 
-    <!-- Mini Player -->
+    <!-- Include Mini Player Guest -->
     <include
-        layout="@layout/view_mini_player"
-        android:id="@+id/miniPlayer"
-        android:visibility="gone"/>
+        layout="@layout/guest_mini_player"
+        android:id="@+id/miniPlayerGuest"
+        android:visibility="gone" />
+
 </LinearLayout>
