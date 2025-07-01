@@ -39,14 +39,10 @@ class VideoPlayerActivity : AppCompatActivity() {
         videoView.setMediaController(mediaController)
 
         findViewById<ImageButton>(R.id.btnSwitchToMusic).setOnClickListener {
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                putExtra("track_id", trackId)
-                putExtra("position", videoView.currentPosition.toLong())
-                putExtra("title", title)
-                putExtra("artist", artist)
-                putExtra("thumbnail", thumbnail)
+            val resultIntent = Intent().apply {
+                putExtra("position", videoView?.currentPosition ?: 0L)
             }
-            startActivity(intent)
+            setResult(RESULT_OK, resultIntent)
             finish()
         }
 
@@ -61,6 +57,15 @@ class VideoPlayerActivity : AppCompatActivity() {
             Log.e("VideoFetch", "No video URL provided")
             Toast.makeText(this, "No video URL", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val resultIntent = Intent().apply {
+            putExtra("position", videoView?.currentPosition ?: 0L)
+        }
+        setResult(RESULT_OK, resultIntent)
+        finish() // Finish and go back to PlayerActivity
     }
 
     private fun playVideo(uri: Uri) {

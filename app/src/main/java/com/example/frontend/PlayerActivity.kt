@@ -88,7 +88,7 @@ class PlayerActivity : AppCompatActivity() {
                     putExtra("position", exoPlayer.currentPosition)
                 }
                 Log.d("LaunchVideo", "Launching with URL = $cachedVideoUrl")
-                startActivity(intent)
+                startActivityForResult(intent, 1001)
             }
             playCurrentTrack(positionFromVideo)
         }
@@ -102,6 +102,15 @@ class PlayerActivity : AppCompatActivity() {
             val service = YouTubeService(this@PlayerActivity)
             cachedVideoUrl = service.getVideoStreamUrl(this@PlayerActivity, track.id)
             Log.d("PreloadVideo", "Video URL: $cachedVideoUrl")
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            val returnedPosition = data?.getLongExtra("position", 0L) ?: 0L
+            exoPlayer.seekTo(returnedPosition)
         }
     }
 
@@ -125,6 +134,7 @@ class PlayerActivity : AppCompatActivity() {
             }
             isPlaying = !isPlaying
             updatePlayButtonIcon()
+            MiniPlayerController.updatePlayState()
 
             // Notify service about playback state
             notifyServicePlaybackState()
@@ -176,6 +186,7 @@ class PlayerActivity : AppCompatActivity() {
                     }
                     Player.STATE_READY -> {
                         binding.totalTime.text = formatTime(exoPlayer.duration)
+                        MiniPlayerController.updatePlayState()
                     }
                 }
             }

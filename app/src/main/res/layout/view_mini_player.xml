@@ -47,11 +47,11 @@
         app:layout_constraintStart_toStartOf="@id/trackTitle"
         app:layout_constraintEnd_toEndOf="@id/trackTitle"/>
 
-    <TextView
-        android:id="@+id/trackDuration"
+    <ImageButton
+        android:id="@+id/pause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="3:45"
+        android:src="@drawable/media3_icon_pause"
         android:textColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
