@@ -79,6 +79,7 @@ class PlayerActivity : AppCompatActivity() {
 
             setupUI()
             binding.btnSwitchToVideo.setOnClickListener {
+                exoPlayer.pause()
                 val currentTrack = songList[currentTrackIndex]
                 val intent = Intent(this, VideoPlayerActivity::class.java).apply {
                     putExtra("videoUrl", cachedVideoUrl)
