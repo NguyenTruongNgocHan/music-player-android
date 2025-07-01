@@ -24,6 +24,7 @@ class HomeFragmentActivity : Fragment() {
     private lateinit var trackContainer: LinearLayout
     private lateinit var trackContainerRanking: LinearLayout
     private var queueTopSong: List<Track> = emptyList()
+    private lateinit var artistContainer: LinearLayout
 
 
 
@@ -43,6 +44,7 @@ class HomeFragmentActivity : Fragment() {
     )
 
     override fun onCreateView(
+
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
@@ -71,7 +73,45 @@ class HomeFragmentActivity : Fragment() {
 
         val miniPlayerView = view.findViewById<View>(R.id.miniPlayer)
         MiniPlayerController.bind(miniPlayerView)
+
+        artistContainer = view.findViewById(R.id.artistContainer)
+        loadSuggestedArtists()
+
     }
+    private fun loadSuggestedArtists() {
+        val artists = listOf(
+            "Đức Phúc" to R.drawable.artist_ducphuc,
+            "Tăng Duy Tân" to R.drawable.artist_tangduytan,
+            "Hoàng Thùy Linh" to R.drawable.artist_hoangthuylinh,
+            "Bích Phương" to R.drawable.artist_bichphuong,
+            "Tiên Tiên" to R.drawable.artist_tientien
+        )
+
+
+        artistContainer.removeAllViews()
+
+        for ((name, avatarUrl) in artists) {
+            val itemView = layoutInflater.inflate(R.layout.item_artist, artistContainer, false)
+            val tvName = itemView.findViewById<TextView>(R.id.tvArtistName)
+            val imgAvatar = itemView.findViewById<ImageView>(R.id.imgArtistAvatar)
+
+            tvName.text = name
+            Glide.with(this)
+                .load(avatarUrl)
+                .placeholder(R.drawable.default_avt)
+                .circleCrop()
+                .into(imgAvatar)
+
+            itemView.setOnClickListener {
+                val intent = Intent(requireContext(), ArtistSongsActivity::class.java)
+                intent.putExtra("artistName", name)
+                startActivity(intent)
+            }
+
+            artistContainer.addView(itemView)
+        }
+    }
+
 
     private fun loadUserInfo() {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: return

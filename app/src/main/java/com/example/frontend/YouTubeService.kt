@@ -152,4 +152,47 @@ class YouTubeService(private val context: Context) {
             return@withContext null
         }
     }
+
+    suspend fun createPlaylistByArtist(artistName: String, limit: Int = 10): List<Track> = withContext(Dispatchers.IO) {
+        try {
+            val searchResponse = youtube.search().list("id,snippet").apply {
+                q = "$artistName official music" // tìm sát nghĩa hơn
+                type = "video"
+                videoCategoryId = "10"
+                maxResults = 20
+                key = context.getString(R.string.youtube_api_key)
+            }.execute()
+
+            val videoIds = searchResponse.items.mapNotNull { it.id?.videoId }
+            if (videoIds.isEmpty()) return@withContext emptyList()
+
+            val videoDetails = youtube.videos().list("snippet,contentDetails,statistics").apply {
+                id = videoIds.joinToString(",")
+                key = context.getString(R.string.youtube_api_key)
+            }.execute()
+
+            val filteredTracks = videoDetails.items
+                .filter { it.snippet.channelTitle.contains(artistName, ignoreCase = true) }
+                .take(limit)
+                .map { video ->
+                    val duration = parseDuration(video.contentDetails.duration)
+                    val viewCount = (video.statistics?.viewCount ?: 0).toLong()
+                    Track(
+                        id = video.id,
+                        title = video.snippet.title ?: "Unknown",
+                        artist = video.snippet.channelTitle ?: artistName,
+                        duration = duration,
+                        thumbnailUrl = video.snippet.thumbnails?.medium?.url ?: "",
+                        viewCount = viewCount
+                    )
+                }
+
+            return@withContext filteredTracks
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating playlist for artist $artistName: ${e.message}", e)
+            return@withContext emptyList()
+        }
+    }
+
 }

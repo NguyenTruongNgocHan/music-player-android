@@ -12,6 +12,8 @@ object MiniPlayerController {
     private var miniPlayerView: View? = null
     private var currentTrack: Track? = null
     private var currentQueue: List<Track> = emptyList()
+    private var currentIndex: Int = 0
+
 
     fun bind(view: View) {
         miniPlayerView = view
@@ -89,4 +91,14 @@ object MiniPlayerController {
         currentTrack = track
         currentQueue = queue
     }
+
+    fun setQueue(queue: List<Track>, startIndex: Int = 0) {
+        this.currentQueue = queue
+        this.currentIndex = startIndex
+        if (queue.isNotEmpty()) {
+            setTrack(queue[startIndex], queue)
+        }
+    }
+
+
 }

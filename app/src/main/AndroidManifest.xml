@@ -71,6 +71,8 @@
             android:name=".PlayerActivity"
             android:exported="true" />
         <activity android:name=".EditFieldActivity" android:exported="true" />
+        <activity android:name=".ArtistSongsActivity" />
+
 
 
 
