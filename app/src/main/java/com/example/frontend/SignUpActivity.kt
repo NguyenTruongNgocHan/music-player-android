@@ -80,9 +80,12 @@ class SignUpActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btnBack).setOnClickListener {
-            finish()
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+            finish() // để activity hiện tại biến mất khỏi stack
         }
+
     }
 
     private fun sendOTP(email: String) {

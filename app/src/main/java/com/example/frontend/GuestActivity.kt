@@ -2,6 +2,7 @@ package com.example.frontend
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,8 +18,12 @@ class GuestActivity : AppCompatActivity() {
     private lateinit var searchView: SearchView
     private lateinit var avatarButton: ImageButton
     private lateinit var contentFrame: FrameLayout
-
+    private lateinit var guestMiniPlayerView: View
     private lateinit var youtubeService: YouTubeService
+
+    private var popularTracks: List<Track> = emptyList()
+    private var allTracks: List<Track> = emptyList()
+    private var fireTracks: List<Track> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,13 +32,9 @@ class GuestActivity : AppCompatActivity() {
         searchView = findViewById(R.id.searchView)
         avatarButton = findViewById(R.id.btnGuestAvatar)
         contentFrame = findViewById(R.id.guestMainContent)
+        guestMiniPlayerView = findViewById(R.id.miniPlayerGuest)
+        GuestMiniPlayerController.bind(guestMiniPlayerView)
 
-        // Bind miniPlayer
-        val miniPlayerView = findViewById<FrameLayout>(R.id.miniPlayer)
-        layoutInflater.inflate(R.layout.view_mini_player, miniPlayerView, true)
-        MiniPlayerController.bind(miniPlayerView)
-
-        // Handle avatar click
         avatarButton.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Bạn đang ở chế độ khách")
@@ -48,20 +49,44 @@ class GuestActivity : AppCompatActivity() {
                 .show()
         }
 
-        // Search
+        youtubeService = YouTubeService(this)
+        loadInitialContent()
+
+        // Khi text search thay đổi
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                Toast.makeText(this@GuestActivity, "Tìm: $query", Toast.LENGTH_SHORT).show()
+            override fun onQueryTextSubmit(query: String?): Boolean = true
+            override fun onQueryTextChange(newText: String?): Boolean {
+                updateContent(newText.orEmpty())
                 return true
             }
-            override fun onQueryTextChange(newText: String?): Boolean = false
         })
-
-        youtubeService = YouTubeService(this)
-        loadGuestContent()
     }
 
-    private fun loadGuestContent() {
+    private fun loadInitialContent() {
+        val db = Firebase.firestore
+        lifecycleScope.launch {
+            // Load popular & all từ YouTube
+            popularTracks = youtubeService.searchSongs("Popular songs")
+            allTracks = youtubeService.searchSongs("All songs")
+
+            // Load Firestore
+            db.collection("tracks").limit(30).get()
+                .addOnSuccessListener { documents ->
+                    fireTracks = documents.map { doc ->
+                        Track(
+                            doc.id,
+                            doc.getString("title") ?: "Unknown",
+                            doc.getString("artist") ?: "Unknown",
+                            doc.getString("thumbnailUrl") ?: "",
+                            "0:00"
+                        )
+                    }
+                    updateContent("")
+                }
+        }
+    }
+
+    private fun updateContent(query: String) {
         val context = this
         val mainLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -71,87 +96,61 @@ class GuestActivity : AppCompatActivity() {
             )
         }
 
-        lifecycleScope.launch {
-            // Popular songs
-            val popularTitle = TextView(context).apply {
-                text = "Popular Songs"
-                textSize = 18f
-                setPadding(16,16,16,8)
-            }
-            mainLayout.addView(popularTitle)
+        if (query.isBlank()) {
+            // Hiển thị popular & all
+            mainLayout.addView(buildSection(" Popular Songs", R.drawable.ic_trending, popularTracks))
+            mainLayout.addView(buildSection(" All Songs", R.drawable.ic_music_note, allTracks))
+        } else {
+            // Tìm kiếm
+            val searchResults = (popularTracks + allTracks + fireTracks)
+                .filter { it.title.contains(query, true) || it.artist.contains(query, true) }
 
-            val popularTracks = youtubeService.searchSongs("Popular songs")
-            val popularContainer = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-            }
-
-            for (track in popularTracks) {
-                val itemView = layoutInflater.inflate(R.layout.item_queue, popularContainer, false)
-                itemView.findViewById<TextView>(R.id.trackTitle).text = track.title
-                itemView.findViewById<TextView>(R.id.trackArtist).text = track.artist
-                itemView.findViewById<TextView>(R.id.trackDuration).text = track.duration
-
-                Glide.with(context)
-                    .load(track.thumbnailUrl)
-                    .placeholder(R.drawable.example)
-                    .centerCrop()
-                    .into(itemView.findViewById(R.id.trackThumbnail))
-
-                itemView.setOnClickListener {
-                    MiniPlayerController.show(track, popularTracks)
-                }
-
-                popularContainer.addView(itemView)
-            }
-            mainLayout.addView(popularContainer)
-
-            // Firestore
-            val dbTitle = TextView(context).apply {
-                text = "All Songs"
-                textSize = 18f
-                setPadding(16,24,16,8)
-            }
-            mainLayout.addView(dbTitle)
-
-            val dbContainer = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-            }
-
-            val db = Firebase.firestore
-            db.collection("tracks").limit(30).get()
-                .addOnSuccessListener { documents ->
-                    val fireTracks = mutableListOf<Track>()
-                    for (doc in documents) {
-                        val title = doc.getString("title") ?: "Unknown"
-                        val artist = doc.getString("artist") ?: "Unknown"
-                        val thumbnailUrl = doc.getString("thumbnailUrl")
-                        val track = Track(doc.id, title, artist, thumbnailUrl ?: "", "0:00")
-                        fireTracks.add(track)
-
-                        val itemView = layoutInflater.inflate(R.layout.item_queue, dbContainer, false)
-                        itemView.findViewById<TextView>(R.id.trackTitle).text = title
-                        itemView.findViewById<TextView>(R.id.trackArtist).text = artist
-                        itemView.findViewById<TextView>(R.id.trackDuration).text = "0:00"
-
-                        Glide.with(context)
-                            .load(thumbnailUrl)
-                            .placeholder(R.drawable.example)
-                            .centerCrop()
-                            .into(itemView.findViewById(R.id.trackThumbnail))
-
-                        itemView.setOnClickListener {
-                            MiniPlayerController.show(track, fireTracks)
-                        }
-
-                        dbContainer.addView(itemView)
-                    }
-
-                    mainLayout.addView(dbContainer)
-
-                    contentFrame.removeAllViews()
-                    val scrollView = ScrollView(context).apply { addView(mainLayout) }
-                    contentFrame.addView(scrollView)
-                }
+            mainLayout.addView(buildSection(" Search Results", android.R.drawable.ic_menu_search, searchResults))
         }
+
+        contentFrame.removeAllViews()
+        val scrollView = ScrollView(context).apply { addView(mainLayout) }
+        contentFrame.addView(scrollView)
+    }
+
+    private fun buildSection(title: String, iconRes: Int, tracks: List<Track>): View {
+        val context = this
+        val sectionLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val titleView = TextView(context).apply {
+            text = title
+            textSize = 18f
+            setPadding(16,16,16,8)
+            setCompoundDrawablesWithIntrinsicBounds(iconRes, 0, 0, 0)
+            compoundDrawablePadding = 8
+        }
+        sectionLayout.addView(titleView)
+
+        tracks.forEach { track ->
+            val itemView = layoutInflater.inflate(R.layout.item_queue, sectionLayout, false)
+            itemView.findViewById<TextView>(R.id.trackTitle).text = track.title
+            itemView.findViewById<TextView>(R.id.trackArtist).text = track.artist
+            itemView.findViewById<TextView>(R.id.trackDuration).text = track.duration
+
+            Glide.with(context)
+                .load(track.thumbnailUrl)
+                .placeholder(R.drawable.example)
+                .centerCrop()
+                .into(itemView.findViewById(R.id.trackThumbnail))
+
+            itemView.setOnClickListener {
+                GuestMiniPlayerController.show(track, tracks)
+            }
+
+            sectionLayout.addView(itemView)
+        }
+
+        return sectionLayout
     }
 }
