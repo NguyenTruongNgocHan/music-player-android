@@ -215,7 +215,7 @@ class PlayerActivity : AppCompatActivity() {
                     handler.post(updateSeekBarRunnable)
 
                     // Notify service about the current track
-                    notifyServiceCurrentTrack()
+                    notifyServiceCurrentTrack(streamUrl)
                 } else {
                     Toast.makeText(this@PlayerActivity, "Unable to load audio", Toast.LENGTH_SHORT)
                         .show()
@@ -236,11 +236,12 @@ class PlayerActivity : AppCompatActivity() {
         startService(intent)
     }
 
-    private fun notifyServiceCurrentTrack() {
+    private fun notifyServiceCurrentTrack(streamUrl: String) {
         val intent = Intent(this, PlayerService::class.java).apply {
             action = "SET_TRACK"
             putExtra("track", songList[currentTrackIndex])
             putExtra("position", exoPlayer.currentPosition)
+            putExtra("streamUrl", streamUrl)
         }
         startService(intent)
     }

@@ -41,7 +41,10 @@ class SearchFragmentActivity : Fragment() {
         loadInitialContent()
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean = true
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchTracks(query.orEmpty())
+                return true
+            }
             override fun onQueryTextChange(newText: String?): Boolean {
                 updateContent(newText.orEmpty())
                 return true
@@ -56,6 +59,45 @@ class SearchFragmentActivity : Fragment() {
             popularTracks = youtubeService.searchSongs("Popular songs")
             allTracks = youtubeService.searchSongs("All songs")
             updateContent("")
+        }
+    }
+
+    private fun searchTracks(query: String) {
+        resultContainer.removeAllViews()
+
+        lifecycleScope.launch {
+            val tracks = youtubeService.searchSongs(query)
+            if (tracks.isEmpty()) {
+                val tv = TextView(requireContext()).apply {
+                    text = "Không tìm thấy kết quả."
+                    textSize = 16f
+                    setPadding(16, 16, 16, 16)
+                }
+                resultContainer.addView(tv)
+            } else {
+                tracks.forEach { track ->
+                    val itemView = layoutInflater.inflate(R.layout.item_queue, resultContainer, false)
+                    itemView.findViewById<TextView>(R.id.trackTitle).text = track.title
+                    itemView.findViewById<TextView>(R.id.trackArtist).text = track.artist
+                    itemView.findViewById<TextView>(R.id.trackDuration).text = track.duration
+
+                    Glide.with(requireContext())
+                        .load(track.thumbnailUrl)
+                        .placeholder(R.drawable.example)
+                        .into(itemView.findViewById(R.id.trackThumbnail))
+
+                    itemView.setOnClickListener {
+                        MiniPlayerController.show(track, tracks)
+                        val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                            putExtra("queue", ArrayList(tracks))
+                            putExtra("track_id", track.id)
+                        }
+                        startActivity(intent)
+                    }
+
+                    resultContainer.addView(itemView)
+                }
+            }
         }
     }
 
