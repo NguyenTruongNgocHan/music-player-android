@@ -1,28 +1,31 @@
 package com.example.frontend
 
-import android.content.ComponentName
+import NextListManager
+import RelatedListManager
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.frontend.databinding.ActivityPlayerBinding
-import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 class PlayerActivity : AppCompatActivity() {
@@ -39,6 +42,20 @@ class PlayerActivity : AppCompatActivity() {
     private var isChangingTrack = false
 
     private var songList: List<Track> = emptyList()
+
+
+    //private lateinit var lyricsManager: LyricsManager
+    //private lateinit var lyricsAdapter: LyricsAdapter
+
+    private lateinit var nextListAdapter: QueueAdapter
+    private lateinit var nextListManager: NextListManager
+
+    private lateinit var relatedListAdapter: QueueAdapter
+    private lateinit var relatedListManager: RelatedListManager
+
+    //private enum class Tab { NEXT, LYRICS, RELATED, CONTENT}
+    private enum class Tab { NEXT, RELATED, CONTENT}
+    private var currentTab: Tab = Tab.CONTENT
 
     private val updateSeekBarRunnable = object : Runnable {
         override fun run() {
@@ -63,7 +80,49 @@ class PlayerActivity : AppCompatActivity() {
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Create local player for UI control
+        //lyricsAdapter = LyricsAdapter(emptyList())
+
+        nextListAdapter = QueueAdapter().apply {
+            setOnItemClickListener { position ->
+                getTrackAt(position)?.let { track ->
+                    playSelectedTrack(track)
+                }
+            }
+        }
+        relatedListAdapter = QueueAdapter().apply {
+            setOnItemClickListener { position ->
+                getTrackAt(position)?.let { track ->
+                    playSelectedTrack(track)
+                }
+            }
+        }
+
+        binding.nextTabContainer.visibility = View.GONE
+        //binding.lyricsTabContainer.visibility = View.GONE
+        binding.relatedTabContainer.visibility = View.GONE
+        /*
+        binding.rvLyric.apply {
+            layoutManager = LinearLayoutManager(this@PlayerActivity)
+            adapter = lyricsAdapter
+        }
+        */
+
+        binding.rvNextList.apply {
+            layoutManager = LinearLayoutManager(this@PlayerActivity)
+            adapter = nextListAdapter
+        }
+
+        binding.rvRelatedList.apply {
+            layoutManager = LinearLayoutManager(this@PlayerActivity)
+            adapter = relatedListAdapter
+        }
+
+        //lyricsManager = LyricsManager(this)
+
+        nextListManager = NextListManager(this, YouTubeService(this))
+
+        relatedListManager = RelatedListManager(this, YouTubeService(this))
+
         exoPlayer = PlayerService.sharedPlayer ?: ExoPlayer.Builder(this).build().also {
             PlayerService.sharedPlayer = it
         }
@@ -93,9 +152,296 @@ class PlayerActivity : AppCompatActivity() {
                 startActivityForResult(intent, 1001)
             }
             playCurrentTrack(positionFromVideo)
+            setupTabs()
+        }
+    }
+    
+    private fun setupTabs() {
+        binding.tabNext.setOnClickListener {
+            switchTab(Tab.NEXT)
+        }
+        /*
+        binding.tabLyric.setOnClickListener {
+            switchTab(Tab.LYRICS)
+        }
+        */
+        binding.tabRelated.setOnClickListener {
+            switchTab(Tab.RELATED)
+        }
+        switchTab(Tab.CONTENT)
+    }
+
+    private fun switchTab(tab: Tab) {
+        if (currentTab == tab) return
+
+        /*
+        if (currentTab == Tab.LYRICS) {
+            handler.removeCallbacks(lyricsSyncRunnable)
+        }
+        */
+
+        currentTab = tab
+        updateTabAppearance()
+        showCurrentTabContent()
+    }
+
+    private fun updateTabAppearance() {
+        // Reset tất cả tab về trạng thái bình thường
+        //listOf(binding.tabNext, binding.tabLyric, binding.tabRelated).forEach {
+        listOf(binding.tabNext, binding.tabRelated).forEach {
+
+            it.setTypeface(null, Typeface.NORMAL)
+            it.alpha = 0.6f
+        }
+
+        // Highlight tab hiện tại
+        when (currentTab) {
+            Tab.CONTENT -> {}
+            Tab.NEXT -> {
+                binding.tabNext.setTypeface(null, Typeface.BOLD)
+                binding.tabNext.alpha = 1f
+            }
+            /*
+            Tab.LYRICS -> {
+                binding.tabLyric.setTypeface(null, Typeface.BOLD)
+                binding.tabLyric.alpha = 1f
+            }
+             */
+            Tab.RELATED -> {
+                binding.tabRelated.setTypeface(null, Typeface.BOLD)
+                binding.tabRelated.alpha = 1f
+            }
         }
     }
 
+    private fun showCurrentTabContent() {
+        // Ẩn tất cả các RecyclerView
+        binding.nextTabContainer.visibility = View.GONE
+        //binding.lyricsTabContainer.visibility = View.GONE
+        binding.relatedTabContainer.visibility = View.GONE
+
+        when (currentTab) {
+            Tab.CONTENT -> {}
+            Tab.NEXT -> {
+                binding.nextTabContainer.visibility = View.VISIBLE
+                showNextList()
+            }
+            /*
+            Tab.LYRICS -> {
+                binding.lyricsTabContainer.visibility = View.VISIBLE
+                showLyric()
+            }
+            */
+            Tab.RELATED -> {
+                binding.relatedTabContainer.visibility = View.VISIBLE
+                showRelatedList()
+            }
+        }
+
+    }
+    /*
+        private fun updateCurrentlyPlayingTrack(trackId: String) {
+            // Cập nhật cho nextListAdapter
+            nextListAdapter.currentlyPlayingIndex = nextListAdapter.currentList.indexOfFirst { it.id == trackId }
+            nextListAdapter.notifyDataSetChanged()
+
+            // Cập nhật cho relatedListAdapter
+            //relatedListAdapter.currentlyPlayingIndex = relatedListAdapter.currentList.indexOfFirst { it.id == trackId }
+            //relatedListAdapter.notifyDataSetChanged()
+        }
+            private fun updateCurrentlyPlayingTrack(trackId: Int) {
+            nextListAdapter.setCurrentlyPlaying(trackId)
+            relatedListAdapter.setCurrentlyPlaying(trackId)
+            }
+
+            private fun updateCurrentlyPlayingTrack() {
+            nextListAdapter.setCurrentlyPlaying(currentTrackIndex)
+            //relatedListAdapter.setCurrentlyPlaying(it.id)
+             }
+
+
+    */
+
+    private fun updateCurrentlyPlayingTrack(trackId: String) {
+        nextListAdapter.setCurrentlyPlaying(trackId)
+        relatedListAdapter.setCurrentlyPlaying(trackId)
+    }
+
+    private fun playSelectedTrack(track: Track) {
+        lifecycleScope.launch {
+            withContext(Dispatchers.Main) {
+                currentTrackIndex = songList.indexOfFirst { it.id == track.id }.takeIf { it != -1 } ?: -1
+                if (currentTrackIndex == -1) {
+                    loadNewNextList(track)
+                    //currentTrackIndex = 0
+                    showRelatedList()
+
+                }
+                //updateCurrentlyPlayingTrack()
+                playCurrentTrack()
+            }
+        }
+    }
+
+    private suspend fun loadNewNextList(track: Track) {
+        val nextList = withContext(Dispatchers.IO) {
+            nextListManager.loadNextList(track)
+        }
+        songList = listOf(track) + nextList
+        currentTrackIndex = 0
+
+    }
+
+    private fun showNextList() {
+        binding.contentProgress.visibility = View.VISIBLE
+        binding.rvNextList.visibility = View.GONE
+        binding.emptyNextText.visibility = View.GONE
+
+        lifecycleScope.launch {
+            try {
+                if (currentTrackIndex == -1) {
+                    val nextList = withContext(Dispatchers.IO) {
+                        nextListManager.loadNextList(songList[currentTrackIndex])
+                    }
+                    songList = listOf(songList[currentTrackIndex]) + nextList
+                    currentTrackIndex = 0
+                }
+
+                withContext(Dispatchers.Main) {
+                    nextListAdapter.submitList(songList)
+                    updateCurrentlyPlayingTrack(songList[currentTrackIndex].id)
+
+                    if (songList.isEmpty()) {
+                        binding.emptyNextText.visibility = View.VISIBLE
+                        //binding.rvNextList.visibility = View.GONE
+                    } else {
+                        binding.rvNextList.visibility = View.VISIBLE
+                        //binding.emptyNextText.visibility = View.GONE
+                    }
+                    binding.contentProgress.visibility = View.GONE
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.contentProgress.visibility = View.GONE
+                    binding.emptyNextText.visibility = View.VISIBLE
+                    Toast.makeText(
+                        this@PlayerActivity,
+                        "Không thể tải danh sách tiếp theo",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+    
+    private fun showRelatedList() {
+        binding.contentProgress.visibility = View.VISIBLE
+        binding.rvRelatedList.visibility = View.GONE
+        binding.emptyRelatedText.visibility = View.GONE
+        lifecycleScope.launch {
+            try {
+                val relatedList = withContext(Dispatchers.IO) {
+                    relatedListManager.loadRelatedList(songList[currentTrackIndex])
+                }
+
+                withContext(Dispatchers.Main) {
+                    if (relatedList.isEmpty()) {
+                        binding.emptyRelatedText.visibility = View.VISIBLE
+                    }
+                    else {
+                        binding.rvRelatedList.visibility = View.VISIBLE
+                        relatedListAdapter.submitList(relatedList)
+                    }
+                    binding.contentProgress.visibility = View.GONE
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.emptyRelatedText.visibility = View.VISIBLE
+                    binding.contentProgress.visibility = View.GONE
+                    Toast.makeText(
+                        this@PlayerActivity,
+                        "Không thể tải bài hát liên quan",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+    /*
+        private fun showLyric() {
+            binding.contentProgress.visibility = View.VISIBLE
+            binding.rvLyric.visibility = View.GONE
+            binding.emptyLyricsText.visibility = View.GONE
+
+            lifecycleScope.launch {
+                try {
+                    val currentTrack = songList[currentTrackIndex]
+                    val lyrics = lyricsManager.fetchLyrics(currentTrack.title, currentTrack.artist)
+
+                    withContext(Dispatchers.Main) {
+                        if (lyrics.isEmpty()) {
+                            binding.emptyLyricsText.visibility = View.VISIBLE
+                        } else {
+                            lyricsAdapter.updateLyrics(lyrics)
+                            //binding.rvLyric.adapter = LyricsAdapter(lyrics)
+                            binding.rvLyric.visibility = View.VISIBLE
+                            if (isPlaying) startLyricsSync()
+                        }
+                        binding.contentProgress.visibility = View.GONE
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        binding.contentProgress.visibility = View.GONE
+                        binding.emptyLyricsText.visibility = View.VISIBLE
+                        Toast.makeText(
+                            this@PlayerActivity,
+                            "Không thể tải lời bài hát",
+                            Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        private fun startLyricsSync() {
+            handler.post(lyricsSyncRunnable)
+        }
+
+        private val lyricsSyncRunnable = object : Runnable {
+            override fun run() {
+                if (binding.rvLyric.visibility == View.VISIBLE  && isPlaying) {
+                    val currentPos = exoPlayer.currentPosition
+                    updateHighlightedLyric(currentPos)
+                    handler.postDelayed(this, 100) // Cập nhật mỗi 100ms
+                }
+            }
+        }
+
+        private fun updateHighlightedLyric(currentTimeMs: Long) {
+            val lyrics = (binding.rvLyric.adapter as? LyricsAdapter)?.getLyrics() ?: return
+
+            // Tìm dòng hiện tại dựa trên thời gian
+            var currentIndex = -1
+            for (i in lyrics.indices) {
+                if (currentTimeMs >= lyrics[i].startTimeMs &&
+                    (i == lyrics.size - 1 || currentTimeMs < lyrics[i + 1].startTimeMs)) {
+                    currentIndex = i
+                    break
+                }
+            }
+            if (currentIndex != -1) {
+                lyricsAdapter.updateCurrentPosition(currentIndex)
+
+                // Tự động cuộn đến dòng hiện tại
+                val layoutManager = binding.rvLyric.layoutManager as LinearLayoutManager
+                val firstVisible = layoutManager.findFirstVisibleItemPosition()
+                val lastVisible = layoutManager.findLastVisibleItemPosition()
+
+                if (currentIndex <= firstVisible || currentIndex >= lastVisible) {
+                    layoutManager.scrollToPositionWithOffset(currentIndex, binding.rvLyric.height / 3)
+                }
+            }
+        }
+    */
     private var cachedVideoUrl: String? = null
 
     @UnstableApi
@@ -193,6 +539,10 @@ class PlayerActivity : AppCompatActivity() {
     private fun playCurrentTrack(startPosition: Long = 0L) {
         val currentTrack = songList[currentTrackIndex]
         updateTrack(currentTrack)
+        
+        nextListAdapter.setCurrentlyPlaying(currentTrack.id)
+        //relatedListAdapter.setCurrentlyPlaying(currentTrack.id)
+
         preloadVideoUrl(currentTrack)
         exoPlayer.repeatMode = if (isRepeat) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
 
