@@ -18,6 +18,17 @@ class QueueAdapter : ListAdapter<Track, QueueAdapter.ViewHolder>(TrackDiffCallba
         itemClickListener = listener
     }
 
+
+    fun setCurrentlyPlaying(trackId: String?) {
+        currentlyPlayingIndex = currentList.indexOfFirst { it.id == trackId }
+        notifyDataSetChanged()
+    }
+
+    fun setCurrentlyPlaying(position: Int) {
+        currentlyPlayingIndex = position
+        notifyDataSetChanged()
+    }
+
     inner class ViewHolder(val binding: ItemQueueBinding) : RecyclerView.ViewHolder(binding.root) {
         init {
             binding.root.setOnClickListener {
@@ -67,4 +78,9 @@ class QueueAdapter : ListAdapter<Track, QueueAdapter.ViewHolder>(TrackDiffCallba
             return oldItem == newItem
         }
     }
+    fun getTrackAt(position: Int): Track? {
+        return if (position in 0 until itemCount) getItem(position) else null
+    }
+
 }
+
