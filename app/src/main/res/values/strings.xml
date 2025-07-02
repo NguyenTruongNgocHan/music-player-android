@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">frontend</string>
-    <string name="youtube_api_key">AIzaSyDngyuikJ4ZC4E4FwyTQvHQxTGitYTbzQo</string>
+    <string name="youtube_api_key">AIzaSyBf4--8YrfEe83z8U1NggrANxz-ydYwZk8</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

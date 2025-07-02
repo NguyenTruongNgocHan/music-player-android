@@ -31,10 +31,39 @@ class LibraryFragmentActivity : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = LibraryAdapter(playlists) { playlist ->
-            val intent = Intent(requireContext(), PlaylistDetailActivity::class.java).apply {
-                putExtra("playlist", playlist)
+            if (playlist.name == "Bài hát yêu thích") {
+                val email = FirebaseAuth.getInstance().currentUser?.email ?: return@LibraryAdapter
+                Firebase.firestore.collection("users").document(email).get()
+                    .addOnSuccessListener { doc ->
+                        val liked = doc.get("likedSongs") as? List<Map<String, Any>> ?: emptyList()
+                        val likedTracks = liked.map {
+                            Track(
+                                id = it["id"] as String,
+                                title = it["title"] as String,
+                                artist = it["artist"] as String,
+                                thumbnailUrl = it["thumbnailUrl"] as String,
+                                duration = it["duration"] as String,
+                                isLiked = true
+                            )
+                        }
+
+                        val intent =
+                            Intent(requireContext(), LikedSongsActivity::class.java).apply {
+                                putExtra("tracks", ArrayList(likedTracks))
+                            }
+                        startActivity(intent)
+                    }
+            } else {
+                if (playlist.name == "Gần đây") {
+                    startActivity(Intent(requireContext(), RecentlyPlayedActivity::class.java))
+                } else {
+                    val intent =
+                        Intent(requireContext(), PlaylistDetailActivity::class.java).apply {
+                            putExtra("playlist", playlist)
+                        }
+                    startActivity(intent)
+                }
             }
-            startActivity(intent)
         }
         binding.libraryRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.libraryRecyclerView.adapter = adapter

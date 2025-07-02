@@ -153,6 +153,11 @@ class YouTubeService(private val context: Context) {
         }
     }
 
+    suspend fun getTrackInfoById(id: String): Track? {
+        val results = searchSongs("ytsearch:$id")
+        return results.find { it.id == id }
+    }
+
     suspend fun createPlaylistByArtist(artistName: String, limit: Int = 10): List<Track> = withContext(Dispatchers.IO) {
         try {
             val searchResponse = youtube.search().list("id,snippet").apply {

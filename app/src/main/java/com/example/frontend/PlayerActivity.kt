@@ -18,6 +18,9 @@ import androidx.media3.session.SessionToken
 import com.bumptech.glide.Glide
 import com.example.frontend.databinding.ActivityPlayerBinding
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -160,6 +163,30 @@ class PlayerActivity : AppCompatActivity() {
             val song = songList[currentTrackIndex]
             song.isLiked = !song.isLiked
             updateHeartIconState()
+
+            val email = FirebaseAuth.getInstance().currentUser?.email ?: return@setOnClickListener
+            val userDoc = Firebase.firestore.collection("users").document(email)
+
+            if (song.isLiked) {
+                // Add to likedSongs
+                val songData = hashMapOf(
+                    "id" to song.id,
+                    "title" to song.title,
+                    "artist" to song.artist,
+                    "duration" to song.duration,
+                    "thumbnailUrl" to song.thumbnailUrl
+                )
+
+                userDoc.update("likedSongs", com.google.firebase.firestore.FieldValue.arrayUnion(songData))
+            } else {
+                // Remove from likedSongs
+                // Firestore can’t remove maps easily — use a workaround: reload all, filter, then write
+                userDoc.get().addOnSuccessListener { doc ->
+                    val liked = doc.get("likedSongs") as? List<Map<String, Any>> ?: return@addOnSuccessListener
+                    val updated = liked.filter { it["id"] != song.id }
+                    userDoc.update("likedSongs", updated)
+                }
+            }
         }
 
         binding.progressBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
@@ -213,6 +240,7 @@ class PlayerActivity : AppCompatActivity() {
                     isPlaying = true
                     updatePlayButtonIcon()
                     handler.post(updateSeekBarRunnable)
+                    saveToRecentlyPlayed(currentTrack)
 
                     // Notify service about the current track
                     notifyServiceCurrentTrack(streamUrl)
@@ -226,6 +254,20 @@ class PlayerActivity : AppCompatActivity() {
             } finally {
                 isChangingTrack = false
             }
+        }
+    }
+
+    private fun saveToRecentlyPlayed(track: Track) {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = Firebase.firestore
+        val docRef = db.collection("users").document(email)
+
+        docRef.get().addOnSuccessListener { document ->
+            val currentList = (document.get("recentlyPlayed") as? List<String>) ?: emptyList()
+            val updatedList = listOf(track.id) + currentList.filterNot { it == track.id } // avoid duplicates
+            val trimmedList = updatedList.take(50) // keep max 50 items
+
+            docRef.update("recentlyPlayed", trimmedList)
         }
     }
 
