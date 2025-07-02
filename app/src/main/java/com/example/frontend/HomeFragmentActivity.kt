@@ -25,6 +25,8 @@ class HomeFragmentActivity : Fragment() {
     private lateinit var trackContainerRanking: LinearLayout
     private var queueTopSong: List<Track> = emptyList()
     private lateinit var artistContainer: LinearLayout
+    private lateinit var longJourneyContainer: LinearLayout
+
 
 
 
@@ -59,6 +61,7 @@ class HomeFragmentActivity : Fragment() {
         avatarButton = view.findViewById(R.id.btnAvatar)
         trackContainer = view.findViewById(R.id.trackContainer)
         trackContainerRanking = view.findViewById(R.id.trackContainerRanking)
+        longJourneyContainer = view.findViewById(R.id.longJourneyContainer)
 
         youtubeService = YouTubeService(requireContext())
 
@@ -70,6 +73,7 @@ class HomeFragmentActivity : Fragment() {
         loadYouTubePopularTracks()
         loadTracks()
         loadTopTrendingTracks()
+        loadLongJourneyTracks()
 
         val miniPlayerView = view.findViewById<View>(R.id.miniPlayer)
         MiniPlayerController.bind(miniPlayerView)
@@ -245,4 +249,39 @@ class HomeFragmentActivity : Fragment() {
                 }
             }
     }
+
+    private fun loadLongJourneyTracks() {
+        lifecycleScope.launch {
+            val tracks = youtubeService.searchSongs("long journey playlist")
+
+            longJourneyContainer.removeAllViews()
+            for (track in tracks.take(15)) {
+                val itemView = layoutInflater.inflate(R.layout.item_long_journey, longJourneyContainer, false)
+                itemView.findViewById<TextView>(R.id.tvTitle).text = track.title
+                itemView.findViewById<TextView>(R.id.tvDuration).text = track.duration
+
+                Glide.with(this@HomeFragmentActivity)
+                    .load(track.thumbnailUrl)
+                    .placeholder(R.drawable.example)
+                    .centerCrop()
+                    .into(itemView.findViewById(R.id.imgThumbnail))
+
+                itemView.setOnClickListener {
+                    MiniPlayerController.show(track)
+                    val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+                        putExtra("track_id", track.id)
+                        putExtra("queue", ArrayList(tracks))
+                    }
+                    startActivity(intent)
+                }
+
+                longJourneyContainer.addView(itemView)
+            }
+        }
+    }
+
+
+
 }
+
+
