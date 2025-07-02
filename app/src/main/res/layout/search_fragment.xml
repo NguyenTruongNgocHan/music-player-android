@@ -32,20 +32,17 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <!-- SearchView -->
-        <androidx.cardview.widget.CardView
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#88FFFFFF">
+            android:layout_height="40dp"
+            android:background="@drawable/search_view_background"
+            android:queryHint="Tìm bài hát..."
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:submitBackground="@android:color/transparent" />
 
-            <androidx.appcompat.widget.SearchView
-                android:id="@+id/searchView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:queryHint="Tìm bài hát, nghệ sĩ..."
-                android:iconifiedByDefault="false"/>
-        </androidx.cardview.widget.CardView>
+
 
         <!-- Kết quả -->
         <ScrollView
