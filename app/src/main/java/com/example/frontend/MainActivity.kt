@@ -14,7 +14,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.example.frontend.databinding.ActivityMainBinding
-import com.example.frontend.ui.library.LibraryFragmentActivity
+import com.example.frontend.LibraryFragmentActivity
 import com.example.frontend.ui.search.SearchFragmentActivity
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -172,6 +172,12 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         updateMiniPlayerUI()
     }
+
+
+    fun openDrawer() {
+        drawerLayout.openDrawer(GravityCompat.START)
+    }
+
 
     private fun updateMiniPlayerUI() {
         val track = MiniPlayerManager.getCurrentTrack()

@@ -1,124 +1,96 @@
-package com.example.frontend.ui.library
+package com.example.frontend
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.EditText
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
-import com.example.frontend.MiniPlayerController
-import com.example.frontend.R
-import com.example.frontend.Track
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.frontend.databinding.LibraryFragmentBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class LibraryFragmentActivity : Fragment() {
-
-    private lateinit var libraryContainer: LinearLayout
-    private lateinit var miniPlayerView: View
-
-    private var likedSongs: List<Track> = emptyList()
-    private var recentSongs: List<Track> = emptyList()
-    private var playlists: List<String> = emptyList() // hoặc List<Playlist>
+    private lateinit var binding: LibraryFragmentBinding
+    private lateinit var adapter: LibraryAdapter
+    private val playlists = mutableListOf<Playlist>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.library_fragment, container, false)
-        libraryContainer = view.findViewById(R.id.libraryContainer)
-
-        miniPlayerView = requireActivity().findViewById(R.id.miniPlayer)
-        MiniPlayerController.bind(miniPlayerView)
-
-        loadLibraryContent()
-
-        return view
+    ): View {
+        binding = LibraryFragmentBinding.inflate(inflater, container, false)
+        setupRecyclerView()
+        setupClickListeners()
+        loadPlaylistsFromFirestore()
+        return binding.root
     }
 
-    private fun loadLibraryContent() {
-        // giả lập dữ liệu
-        likedSongs = listOf(
-            Track("1", "Song A", "Artist A", "3:30", "https://...", isLiked = true),
-            Track("2", "Song B", "Artist B", "4:00", "https://...", isLiked = true)
-        )
-        recentSongs = listOf(
-            Track("3", "Recent X", "Artist X", "3:00", "https://..."),
-            Track("4", "Recent Y", "Artist Y", "2:45", "https://...")
-        )
-        playlists = listOf("EDM", "Nhạc Việt", "Ballad buồn")
-
-        libraryContainer.removeAllViews()
-        libraryContainer.addView(buildSection("Bài hát đã thích", likedSongs))
-        libraryContainer.addView(buildSection("Nghe gần đây", recentSongs))
-        libraryContainer.addView(buildPlaylistSection())
+    private fun setupRecyclerView() {
+        adapter = LibraryAdapter(playlists) { playlist ->
+            val intent = Intent(requireContext(), PlaylistDetailActivity::class.java).apply {
+                putExtra("playlist", playlist)
+            }
+            startActivity(intent)
+        }
+        binding.libraryRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.libraryRecyclerView.adapter = adapter
     }
 
-    private fun buildSection(title: String, tracks: List<Track>): View {
-        val context = requireContext()
-        val sectionLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+    private fun setupClickListeners() {
+        binding.btnAvatar.setOnClickListener {
+            (activity as? MainActivity)?.openDrawer()
         }
 
-        val titleView = TextView(context).apply {
-            text = title
-            textSize = 18f
-            setPadding(16,16,16,8)
+        binding.btnAddPlaylist.setOnClickListener {
+            showCreatePlaylistDialog()
         }
-        sectionLayout.addView(titleView)
-
-        tracks.forEach { track ->
-            val itemView = layoutInflater.inflate(R.layout.item_queue, sectionLayout, false)
-            itemView.findViewById<TextView>(R.id.trackTitle).text = track.title
-            itemView.findViewById<TextView>(R.id.trackArtist).text = track.artist
-            Glide.with(context)
-                .load(track.thumbnailUrl)
-                .placeholder(R.drawable.default_avt)
-                .centerCrop()
-                .into(itemView.findViewById(R.id.trackThumbnail))
-
-            itemView.setOnClickListener {
-                // handle play
-            }
-
-            sectionLayout.addView(itemView)
-        }
-
-        return sectionLayout
     }
 
-    private fun buildPlaylistSection(): View {
-        val context = requireContext()
-        val sectionLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        val titleView = TextView(context).apply {
-            text = "Playlists"
-            textSize = 18f
-            setPadding(16,16,16,8)
-        }
-        sectionLayout.addView(titleView)
-
-        playlists.forEach { name ->
-            val item = TextView(context).apply {
-                text = name
-                textSize = 16f
-                setPadding(32,8,16,8)
+    private fun loadPlaylistsFromFirestore() {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        Firebase.firestore.collection("users").document(email).get()
+            .addOnSuccessListener { doc ->
+                val data = doc.get("playlists") as? List<String> ?: emptyList()
+                playlists.clear()
+                playlists.add(Playlist("Bài hát yêu thích"))
+                playlists.add(Playlist("Gần đây"))
+                data.forEach { name ->
+                    if (name != "Bài hát yêu thích" && name != "Gần đây") {
+                        playlists.add(Playlist(name))
+                    }
+                }
+                adapter.notifyDataSetChanged()
             }
-            item.setOnClickListener {
-                // mở playlist detail
-            }
-            sectionLayout.addView(item)
-        }
+    }
 
-        return sectionLayout
+    private fun showCreatePlaylistDialog() {
+        val editText = EditText(requireContext()).apply {
+            hint = "Tên playlist"
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("Tạo playlist mới")
+            .setView(editText)
+            .setPositiveButton("Tạo") { dialog, _ ->
+                val name = editText.text.toString()
+                if (name.isNotBlank()) {
+                    playlists.add(Playlist(name))
+                    adapter.notifyDataSetChanged()
+                    savePlaylistsToFirestore()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+    }
+
+    private fun savePlaylistsToFirestore() {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val playlistNames = playlists.map { it.name }
+        Firebase.firestore.collection("users").document(email)
+            .update("playlists", playlistNames)
     }
 }
