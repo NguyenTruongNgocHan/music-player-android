@@ -2,7 +2,6 @@ package com.example.frontend
 
 import NextListManager
 import RelatedListManager
-import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
@@ -18,12 +17,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.frontend.databinding.ActivityPlayerBinding
-import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,8 +44,8 @@ class PlayerActivity : AppCompatActivity() {
     private var songList: List<Track> = emptyList()
 
 
-    private lateinit var lyricsManager: LyricsManager
-    private lateinit var lyricsAdapter: LyricsAdapter
+    //private lateinit var lyricsManager: LyricsManager
+    //private lateinit var lyricsAdapter: LyricsAdapter
 
     private lateinit var nextListAdapter: QueueAdapter
     private lateinit var nextListManager: NextListManager
@@ -84,7 +80,7 @@ class PlayerActivity : AppCompatActivity() {
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        lyricsAdapter = LyricsAdapter(emptyList())
+        //lyricsAdapter = LyricsAdapter(emptyList())
 
         nextListAdapter = QueueAdapter().apply {
             setOnItemClickListener { position ->
@@ -121,13 +117,12 @@ class PlayerActivity : AppCompatActivity() {
             adapter = relatedListAdapter
         }
 
-        lyricsManager = LyricsManager(this)
+        //lyricsManager = LyricsManager(this)
 
         nextListManager = NextListManager(this, YouTubeService(this))
 
         relatedListManager = RelatedListManager(this, YouTubeService(this))
 
-        // Create local player for UI control
         exoPlayer = PlayerService.sharedPlayer ?: ExoPlayer.Builder(this).build().also {
             PlayerService.sharedPlayer = it
         }
@@ -160,8 +155,7 @@ class PlayerActivity : AppCompatActivity() {
             setupTabs()
         }
     }
-
-
+    
     private fun setupTabs() {
         binding.tabNext.setOnClickListener {
             switchTab(Tab.NEXT)
@@ -245,31 +239,46 @@ class PlayerActivity : AppCompatActivity() {
         }
 
     }
+    /*
+        private fun updateCurrentlyPlayingTrack(trackId: String) {
+            // Cập nhật cho nextListAdapter
+            nextListAdapter.currentlyPlayingIndex = nextListAdapter.currentList.indexOfFirst { it.id == trackId }
+            nextListAdapter.notifyDataSetChanged()
+
+            // Cập nhật cho relatedListAdapter
+            //relatedListAdapter.currentlyPlayingIndex = relatedListAdapter.currentList.indexOfFirst { it.id == trackId }
+            //relatedListAdapter.notifyDataSetChanged()
+        }
+            private fun updateCurrentlyPlayingTrack(trackId: Int) {
+            nextListAdapter.setCurrentlyPlaying(trackId)
+            relatedListAdapter.setCurrentlyPlaying(trackId)
+            }
+
+            private fun updateCurrentlyPlayingTrack() {
+            nextListAdapter.setCurrentlyPlaying(currentTrackIndex)
+            //relatedListAdapter.setCurrentlyPlaying(it.id)
+             }
+
+
+    */
 
     private fun updateCurrentlyPlayingTrack(trackId: String) {
-        // Cập nhật cho nextListAdapter
-        nextListAdapter.currentlyPlayingIndex = nextListAdapter.currentList.indexOfFirst { it.id == trackId }
-        nextListAdapter.notifyDataSetChanged()
-
-        // Cập nhật cho relatedListAdapter
-        //relatedListAdapter.currentlyPlayingIndex = relatedListAdapter.currentList.indexOfFirst { it.id == trackId }
-        //relatedListAdapter.notifyDataSetChanged()
+        nextListAdapter.setCurrentlyPlaying(trackId)
+        relatedListAdapter.setCurrentlyPlaying(trackId)
     }
 
     private fun playSelectedTrack(track: Track) {
         lifecycleScope.launch {
             withContext(Dispatchers.Main) {
                 currentTrackIndex = songList.indexOfFirst { it.id == track.id }.takeIf { it != -1 } ?: -1
-                // Nếu bài không nằm trong queue của tiếp theo
                 if (currentTrackIndex == -1) {
                     loadNewNextList(track)
                     //currentTrackIndex = 0
                     showRelatedList()
 
                 }
-                updateCurrentlyPlayingTrack(track.id)
+                //updateCurrentlyPlayingTrack()
                 playCurrentTrack()
-
             }
         }
     }
@@ -280,6 +289,7 @@ class PlayerActivity : AppCompatActivity() {
         }
         songList = listOf(track) + nextList
         currentTrackIndex = 0
+
     }
 
     private fun showNextList() {
@@ -287,24 +297,29 @@ class PlayerActivity : AppCompatActivity() {
         binding.rvNextList.visibility = View.GONE
         binding.emptyNextText.visibility = View.GONE
 
-
         lifecycleScope.launch {
             try {
-                val nextList = withContext(Dispatchers.IO) {
-                    nextListManager.loadNextList(songList[currentTrackIndex])
+                if (currentTrackIndex == -1) {
+                    val nextList = withContext(Dispatchers.IO) {
+                        nextListManager.loadNextList(songList[currentTrackIndex])
+                    }
+                    songList = listOf(songList[currentTrackIndex]) + nextList
+                    currentTrackIndex = 0
                 }
-                songList = listOf(songList[currentTrackIndex]) + nextList
-                currentTrackIndex = 0
+
                 withContext(Dispatchers.Main) {
-                    if (nextList.isEmpty()) {
+                    nextListAdapter.submitList(songList)
+                    updateCurrentlyPlayingTrack(songList[currentTrackIndex].id)
+
+                    if (songList.isEmpty()) {
                         binding.emptyNextText.visibility = View.VISIBLE
+                        //binding.rvNextList.visibility = View.GONE
                     } else {
-                        nextListAdapter.submitList(songList)
                         binding.rvNextList.visibility = View.VISIBLE
+                        //binding.emptyNextText.visibility = View.GONE
                     }
                     binding.contentProgress.visibility = View.GONE
                 }
-
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     binding.contentProgress.visibility = View.GONE
@@ -318,8 +333,7 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
     }
-
-
+    
     private fun showRelatedList() {
         binding.contentProgress.visibility = View.VISIBLE
         binding.rvRelatedList.visibility = View.GONE
@@ -353,81 +367,81 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
     }
-/*
-    private fun showLyric() {
-        binding.contentProgress.visibility = View.VISIBLE
-        binding.rvLyric.visibility = View.GONE
-        binding.emptyLyricsText.visibility = View.GONE
+    /*
+        private fun showLyric() {
+            binding.contentProgress.visibility = View.VISIBLE
+            binding.rvLyric.visibility = View.GONE
+            binding.emptyLyricsText.visibility = View.GONE
 
-        lifecycleScope.launch {
-            try {
-                val currentTrack = songList[currentTrackIndex]
-                val lyrics = lyricsManager.fetchLyrics(currentTrack.title, currentTrack.artist)
+            lifecycleScope.launch {
+                try {
+                    val currentTrack = songList[currentTrackIndex]
+                    val lyrics = lyricsManager.fetchLyrics(currentTrack.title, currentTrack.artist)
 
-                withContext(Dispatchers.Main) {
-                    if (lyrics.isEmpty()) {
-                        binding.emptyLyricsText.visibility = View.VISIBLE
-                    } else {
-                        lyricsAdapter.updateLyrics(lyrics)
-                        //binding.rvLyric.adapter = LyricsAdapter(lyrics)
-                        binding.rvLyric.visibility = View.VISIBLE
-                        if (isPlaying) startLyricsSync()
+                    withContext(Dispatchers.Main) {
+                        if (lyrics.isEmpty()) {
+                            binding.emptyLyricsText.visibility = View.VISIBLE
+                        } else {
+                            lyricsAdapter.updateLyrics(lyrics)
+                            //binding.rvLyric.adapter = LyricsAdapter(lyrics)
+                            binding.rvLyric.visibility = View.VISIBLE
+                            if (isPlaying) startLyricsSync()
+                        }
+                        binding.contentProgress.visibility = View.GONE
                     }
-                    binding.contentProgress.visibility = View.GONE
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        binding.contentProgress.visibility = View.GONE
+                        binding.emptyLyricsText.visibility = View.VISIBLE
+                        Toast.makeText(
+                            this@PlayerActivity,
+                            "Không thể tải lời bài hát",
+                            Toast.LENGTH_SHORT).show()
+                    }
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    binding.contentProgress.visibility = View.GONE
-                    binding.emptyLyricsText.visibility = View.VISIBLE
-                    Toast.makeText(
-                        this@PlayerActivity,
-                        "Không thể tải lời bài hát",
-                        Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        private fun startLyricsSync() {
+            handler.post(lyricsSyncRunnable)
+        }
+
+        private val lyricsSyncRunnable = object : Runnable {
+            override fun run() {
+                if (binding.rvLyric.visibility == View.VISIBLE  && isPlaying) {
+                    val currentPos = exoPlayer.currentPosition
+                    updateHighlightedLyric(currentPos)
+                    handler.postDelayed(this, 100) // Cập nhật mỗi 100ms
                 }
             }
         }
-    }
 
-    private fun startLyricsSync() {
-        handler.post(lyricsSyncRunnable)
-    }
+        private fun updateHighlightedLyric(currentTimeMs: Long) {
+            val lyrics = (binding.rvLyric.adapter as? LyricsAdapter)?.getLyrics() ?: return
 
-    private val lyricsSyncRunnable = object : Runnable {
-        override fun run() {
-            if (binding.rvLyric.visibility == View.VISIBLE  && isPlaying) {
-                val currentPos = exoPlayer.currentPosition
-                updateHighlightedLyric(currentPos)
-                handler.postDelayed(this, 100) // Cập nhật mỗi 100ms
+            // Tìm dòng hiện tại dựa trên thời gian
+            var currentIndex = -1
+            for (i in lyrics.indices) {
+                if (currentTimeMs >= lyrics[i].startTimeMs &&
+                    (i == lyrics.size - 1 || currentTimeMs < lyrics[i + 1].startTimeMs)) {
+                    currentIndex = i
+                    break
+                }
+            }
+            if (currentIndex != -1) {
+                lyricsAdapter.updateCurrentPosition(currentIndex)
+
+                // Tự động cuộn đến dòng hiện tại
+                val layoutManager = binding.rvLyric.layoutManager as LinearLayoutManager
+                val firstVisible = layoutManager.findFirstVisibleItemPosition()
+                val lastVisible = layoutManager.findLastVisibleItemPosition()
+
+                if (currentIndex <= firstVisible || currentIndex >= lastVisible) {
+                    layoutManager.scrollToPositionWithOffset(currentIndex, binding.rvLyric.height / 3)
+                }
             }
         }
-    }
-
-    private fun updateHighlightedLyric(currentTimeMs: Long) {
-        val lyrics = (binding.rvLyric.adapter as? LyricsAdapter)?.getLyrics() ?: return
-
-        // Tìm dòng hiện tại dựa trên thời gian
-        var currentIndex = -1
-        for (i in lyrics.indices) {
-            if (currentTimeMs >= lyrics[i].startTimeMs &&
-                (i == lyrics.size - 1 || currentTimeMs < lyrics[i + 1].startTimeMs)) {
-                currentIndex = i
-                break
-            }
-        }
-        if (currentIndex != -1) {
-            lyricsAdapter.updateCurrentPosition(currentIndex)
-
-            // Tự động cuộn đến dòng hiện tại
-            val layoutManager = binding.rvLyric.layoutManager as LinearLayoutManager
-            val firstVisible = layoutManager.findFirstVisibleItemPosition()
-            val lastVisible = layoutManager.findLastVisibleItemPosition()
-
-            if (currentIndex <= firstVisible || currentIndex >= lastVisible) {
-                layoutManager.scrollToPositionWithOffset(currentIndex, binding.rvLyric.height / 3)
-            }
-        }
-    }
-*/
+    */
     private var cachedVideoUrl: String? = null
 
     @UnstableApi
@@ -525,6 +539,10 @@ class PlayerActivity : AppCompatActivity() {
     private fun playCurrentTrack(startPosition: Long = 0L) {
         val currentTrack = songList[currentTrackIndex]
         updateTrack(currentTrack)
+        
+        nextListAdapter.setCurrentlyPlaying(currentTrack.id)
+        //relatedListAdapter.setCurrentlyPlaying(currentTrack.id)
+
         preloadVideoUrl(currentTrack)
         exoPlayer.repeatMode = if (isRepeat) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
 
