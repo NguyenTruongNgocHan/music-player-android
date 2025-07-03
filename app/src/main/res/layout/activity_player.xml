@@ -14,11 +14,11 @@
         android:background="@drawable/rounded_button_bg"
         android:src="@drawable/media3_icon_play"
         android:contentDescription="Chuyển sang Video"
-        app:layout_constraintBottom_toTopOf="@id/albumArt"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintDimensionRatio="1:1" />
+        app:layout_constraintTop_toTopOf="@id/albumArt"
+        app:layout_constraintStart_toStartOf="@id/albumArt"
+        app:layout_constraintEnd_toEndOf="@id/albumArt"
+        app:layout_constraintDimensionRatio="1:1"
+        android:elevation="6dp" />
 
     <!-- Ảnh bìa album -->
     <ImageView
